@@ -49,41 +49,44 @@ export default function Home() {
       <section className="mx-auto grid max-w-6xl gap-12 px-6 py-24 md:grid-cols-2 md:items-center">
         <div>
           <p className="text-[11px] uppercase tracking-[0.28em] text-gold">
-            Manifeste
+            Mission
           </p>
           <h2 className="mt-4 font-serif text-4xl leading-tight text-brown sm:text-5xl">
-            Un streetwear de retenue.
+            L&apos;opulence traditionnelle. L&apos;audace de la rue.
           </h2>
         </div>
         <p className="max-w-lg text-lg leading-8 text-brown-soft">
-          StreetWealth Co. ne cherche pas le bruit. La marque compose des
-          silhouettes précises, des matières denses, une signature qui se lit
-          de près. L&apos;ivoire, le brun, l&apos;or champagne : une palette
-          d&apos;atelier, pas de spectacle.
+          {brand.mission}
         </p>
       </section>
 
-      <section className="border-y border-border bg-ivory">
-        <div className="mx-auto grid max-w-6xl gap-px bg-border md:grid-cols-3">
-          {[
-            {
-              title: "Éditions limitées",
-              body: "Chaque pièce est numérotée dans l'esprit, jamais reproduite à l'infini.",
-            },
-            {
-              title: "Accès privé",
-              body: "La boutique s'ouvre sur invitation. Le cercle reste volontairement étroit.",
-            },
-            {
-              title: "Coupe d'atelier",
-              body: "Des grammages lourds, des finitions nettes, une présence sans ostentation.",
-            },
-          ].map((item) => (
-            <article key={item.title} className="bg-ivory px-8 py-14">
-              <h3 className="font-serif text-2xl text-brown">{item.title}</h3>
-              <p className="mt-4 leading-7 text-muted">{item.body}</p>
-            </article>
-          ))}
+      <section className="border-y border-border bg-ivory px-6 py-24">
+        <div className="mx-auto max-w-6xl">
+          <p className="text-center text-[11px] uppercase tracking-[0.28em] text-gold">
+            Les valeurs
+          </p>
+          <h2 className="mt-4 text-center font-serif text-4xl text-brown">
+            Créativité, élégance, accessibilité.
+          </h2>
+          <div className="mt-16 grid gap-8 md:grid-cols-3">
+            {brand.values.map((item, index) => (
+              <article
+                key={item.title}
+                className={`border border-border bg-cream px-8 py-12 ${
+                  index === 1 ? "md:mt-10" : index === 2 ? "md:mt-20" : ""
+                }`}
+              >
+                <p className="font-serif text-3xl text-gold/50">▲</p>
+                <h3 className="mt-6 font-serif text-2xl text-brown">
+                  {item.title}
+                </h3>
+                <p className="mt-4 leading-7 text-muted">{item.body}</p>
+              </article>
+            ))}
+          </div>
+          <p className="mx-auto mt-16 max-w-2xl text-center font-serif text-xl leading-relaxed text-brown-soft">
+            {brand.offer}
+          </p>
         </div>
       </section>
 

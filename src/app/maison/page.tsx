@@ -15,23 +15,33 @@ export default function MaisonPage() {
         {brand.tagline}
       </h1>
       <div className="mt-10 space-y-6 text-lg leading-8 text-brown-soft">
-        <p>
-          StreetWealth Co. est née d&apos;une exigence simple : habiller le
-          quotidien avec la même attention qu&apos;une pièce d&apos;archive.
-          Le streetwear, ici, n&apos;est pas un costume. C&apos;est une
-          écriture.
-        </p>
-        <p>
-          Le triangle discret au cœur du nom n&apos;est pas un ornement. Il
-          marque un point d&apos;équilibre — entre la rue et l&apos;atelier,
-          entre la matière et la retenue.
-        </p>
-        <p>
-          Les collections restent courtes. Les tissus sont choisis pour leur
-          densité. L&apos;or n&apos;apparaît qu&apos;en accent, jamais en
-          décor. La boutique, privée, protège ce rythme.
-        </p>
+        <p>{brand.mission}</p>
+        <p>{brand.offer}</p>
       </div>
+
+      <section className="mt-16 border-t border-border pt-16">
+        <p className="text-[11px] uppercase tracking-[0.28em] text-gold">
+          Vision
+        </p>
+        <h2 className="mt-4 font-serif text-3xl text-brown">
+          {brand.visionLead}
+        </h2>
+        <p className="mt-6 text-lg leading-8 text-brown-soft">{brand.vision}</p>
+      </section>
+
+      <section className="mt-16 border-t border-border pt-16">
+        <p className="text-[11px] uppercase tracking-[0.28em] text-gold">
+          Valeurs
+        </p>
+        <ul className="mt-10 space-y-10">
+          {brand.values.map((item) => (
+            <li key={item.title}>
+              <h3 className="font-serif text-2xl text-brown">{item.title}</h3>
+              <p className="mt-3 leading-7 text-brown-soft">{item.body}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
     </article>
   );
 }

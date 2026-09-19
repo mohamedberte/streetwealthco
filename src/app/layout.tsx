@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     default: `${brand.name} — ${brand.tagline}`,
     template: `%s — ${brand.name}`,
   },
-  description: brand.tagline,
+  description: `${brand.tagline} ${brand.mission}`,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

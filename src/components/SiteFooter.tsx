@@ -42,8 +42,8 @@ export function SiteFooter() {
           <p>{brand.city}</p>
           <p className="mt-3 normal-case tracking-normal">{brand.email}</p>
           <p className="mt-6 max-w-xs normal-case tracking-normal leading-relaxed">
-            Accès boutique sur invitation. Les pièces sont éditées en quantités
-            limitées.
+            L&apos;opulence héritée, l&apos;audace de la rue. Accès sur
+            invitation.
           </p>
         </div>
       </div>
