@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StreetWealth Co.
 
-## Getting Started
+Site vitrine et boutique privée de StreetWealth Co.
 
-First, run the development server:
+**L'expression d'un style distinctif qui transcende les frontières.**
+
+## Démarrage
 
 ```bash
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Ouvrir [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Boutique privée
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Les routes `/boutique` sont protégées par un code d'accès.
 
-## Learn More
+En local, le code par défaut est `STREETWEALTH` (variable `BOUTIQUE_ACCESS_CODE` dans `.env.local`).
 
-To learn more about Next.js, take a look at the following resources:
+En production, définissez un code long et unique. Sans cette variable, l'accès est refusé.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Pages
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Route | Rôle |
+| --- | --- |
+| `/` | Vitrine |
+| `/maison` | Manifeste |
+| `/collections` | Aperçu public |
+| `/contact` | Atelier |
+| `/acces` | Porte d'entrée |
+| `/boutique` | Catalogue privé |
+| `/boutique/[slug]` | Fiche pièce |
 
-## Deploy on Vercel
+Le panier est local (navigateur). Le paiement n'est pas encore branché.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Palette
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Crème `#E8D8C0`, ivoire `#F3EBDD`, brun `#24150F`, brun doux `#5C493D`, or `#A9844F` (accent uniquement).
