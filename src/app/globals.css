@@ -65,10 +65,45 @@ body {
   border: 1px solid rgb(83 111 96 / 35%);
   background:
     linear-gradient(145deg, rgb(250 248 243 / 84%) 0%, rgb(225 233 225 / 62%) 100%);
+  border-radius: 1.15rem;
+  overflow: hidden;
   box-shadow:
     0 24px 45px -30px rgb(36 21 15 / 40%),
     inset 0 1px 0 rgb(250 248 243 / 95%);
   will-change: transform;
+}
+
+.sw-glass-panel {
+  border: 1px solid rgb(250 248 243 / 42%);
+  border-radius: 1.2rem;
+  background: linear-gradient(
+    152deg,
+    rgb(250 248 243 / 20%) 0%,
+    rgb(250 248 243 / 11%) 46%,
+    rgb(250 248 243 / 6%) 100%
+  );
+  box-shadow:
+    0 34px 55px -34px rgb(36 21 15 / 72%),
+    inset 0 1px 0 rgb(250 248 243 / 38%);
+  backdrop-filter: blur(5px);
+}
+
+.sw-cinematic-media {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.sw-light-sweep {
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    transparent 44%,
+    rgb(250 248 243 / 10%) 50%,
+    transparent 57%,
+    transparent 100%
+  );
+  mix-blend-mode: screen;
+  animation: sw-sweep 14s linear infinite;
 }
 
 .sw-motion-layer {
@@ -236,6 +271,15 @@ button {
   }
 }
 
+@keyframes sw-sweep {
+  from {
+    transform: translateX(-36%);
+  }
+  to {
+    transform: translateX(38%);
+  }
+}
+
 @media (min-width: 1024px) {
   .sw-runway-track {
     gap: 1.9rem;
@@ -292,7 +336,8 @@ button {
   }
 
   .sw-aura,
-  .sw-scroll-progress {
+  .sw-scroll-progress,
+  .sw-light-sweep {
     animation: none;
   }
 }

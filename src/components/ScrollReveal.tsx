@@ -12,6 +12,7 @@ const SCENE_COPY_SELECTOR = "[data-scene-copy]";
 const SCENE_FOCUS_SELECTOR = "[data-scene-focus]";
 const SCENE_STEP_SELECTOR = "[data-scene-step]";
 const RUNWAY_TRACK_SELECTOR = "[data-runway-track]";
+const ZOOM_SELECTOR = "[data-zoom]";
 
 export function ScrollReveal() {
   const pathname = usePathname();
@@ -328,6 +329,61 @@ export function ScrollReveal() {
               scrub: enableHeavyScrollFx ? 1.1 : 0.7,
             },
           });
+        });
+
+        const zoomElements = Array.from(
+          document.querySelectorAll<HTMLElement>(ZOOM_SELECTOR),
+        );
+
+        zoomElements.forEach((element) => {
+          const rawAmount = Number.parseFloat(element.dataset.zoom ?? "1.1");
+          const amount = Number.isNaN(rawAmount)
+            ? 1.1
+            : Math.max(rawAmount, 1.01);
+
+          const trigger =
+            element.closest<HTMLElement>("[data-parallax-root]") ??
+            element.parentElement ??
+            element;
+
+          if (!enableHeavyScrollFx && isCoarse) {
+            gsap.fromTo(
+              element,
+              {
+                scale: 1.04,
+              },
+              {
+                scale: 1,
+                duration: 0.95,
+                ease: "power2.out",
+                scrollTrigger: {
+                  trigger,
+                  start: "top 90%",
+                  once: true,
+                },
+              },
+            );
+            return;
+          }
+
+          const fromScale = enableHeavyScrollFx ? amount : 1 + (amount - 1) * 0.45;
+
+          gsap.fromTo(
+            element,
+            {
+              scale: fromScale,
+            },
+            {
+              scale: 1,
+              ease: "none",
+              scrollTrigger: {
+                trigger,
+                start: "top bottom",
+                end: "bottom top",
+                scrub: enableHeavyScrollFx ? 1 : 0.6,
+              },
+            },
+          );
         });
 
         const staggerGroups = Array.from(

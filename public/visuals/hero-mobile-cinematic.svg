@@ -1,0 +1,28 @@
+<svg width="1300" height="1900" viewBox="0 0 1300 1900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="80" x2="1180" y2="1780" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#D8C2A2"/>
+      <stop offset="0.38" stop-color="#EBDFCB"/>
+      <stop offset="0.72" stop-color="#D6E2D9"/>
+      <stop offset="1" stop-color="#E9EFEA"/>
+    </linearGradient>
+    <radialGradient id="pulse1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(340 510) rotate(37) scale(470 430)">
+      <stop stop-color="#3C654E" stop-opacity="0.58"/>
+      <stop offset="1" stop-color="#3C654E" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="pulse2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(930 1500) rotate(145) scale(640 520)">
+      <stop stop-color="#24150F" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#24150F" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="streak" width="100" height="100" patternUnits="userSpaceOnUse" patternTransform="rotate(21)">
+      <path d="M1 0V100" stroke="#2A2D2A" stroke-opacity="0.1" stroke-width="2"/>
+    </pattern>
+  </defs>
+
+  <rect width="1300" height="1900" fill="url(#bg)"/>
+  <rect width="1300" height="1900" fill="url(#streak)"/>
+  <ellipse cx="360" cy="520" rx="520" ry="470" fill="url(#pulse1)"/>
+  <ellipse cx="900" cy="1510" rx="700" ry="590" fill="url(#pulse2)"/>
+
+  <path d="M330 1240C520 1100 810 1090 980 1220C1150 1350 1190 1630 1040 1780C890 1930 560 1940 370 1810C180 1680 140 1420 330 1240Z" fill="#3C654E" fill-opacity="0.2"/>
+</svg>

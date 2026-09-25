@@ -1,0 +1,43 @@
+<svg width="2560" height="1600" viewBox="0 0 2560 1600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="178" y1="120" x2="2300" y2="1480" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#DAC8AC"/>
+      <stop offset="0.42" stop-color="#ECE2D1"/>
+      <stop offset="0.73" stop-color="#D2E0D6"/>
+      <stop offset="1" stop-color="#E9EFEA"/>
+    </linearGradient>
+    <radialGradient id="aura1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(430 380) rotate(31) scale(640 480)">
+      <stop stop-color="#3F684F" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#3F684F" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="aura2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(2140 1230) rotate(160) scale(820 560)">
+      <stop stop-color="#24150F" stop-opacity="0.36"/>
+      <stop offset="1" stop-color="#24150F" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="silk" x1="1400" y1="220" x2="2090" y2="1200" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3A614B" stop-opacity="0.48"/>
+      <stop offset="1" stop-color="#3A614B" stop-opacity="0.1"/>
+    </linearGradient>
+    <pattern id="threads" width="120" height="120" patternUnits="userSpaceOnUse" patternTransform="rotate(20)">
+      <rect width="120" height="120" fill="transparent"/>
+      <path d="M2 0V120" stroke="#2F332F" stroke-opacity="0.1" stroke-width="2"/>
+    </pattern>
+  </defs>
+
+  <rect width="2560" height="1600" fill="url(#bg)"/>
+  <rect width="2560" height="1600" fill="url(#threads)"/>
+  <ellipse cx="450" cy="390" rx="700" ry="520" fill="url(#aura1)"/>
+  <ellipse cx="2100" cy="1240" rx="920" ry="620" fill="url(#aura2)"/>
+
+  <path d="M1710 220C1910 170 2190 250 2290 430C2390 610 2360 880 2170 1050C1980 1220 1640 1260 1440 1130C1240 1000 1210 690 1330 500C1410 370 1540 260 1710 220Z" fill="url(#silk)"/>
+
+  <g opacity="0.26">
+    <circle cx="1650" cy="580" r="4" fill="#FAF8F3"/>
+    <circle cx="1730" cy="640" r="5" fill="#FAF8F3"/>
+    <circle cx="1810" cy="700" r="4" fill="#FAF8F3"/>
+    <circle cx="1890" cy="760" r="5" fill="#FAF8F3"/>
+    <circle cx="1970" cy="820" r="4" fill="#FAF8F3"/>
+    <circle cx="2050" cy="880" r="5" fill="#FAF8F3"/>
+    <circle cx="2130" cy="940" r="4" fill="#FAF8F3"/>
+  </g>
+</svg>
