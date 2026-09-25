@@ -18,7 +18,7 @@ export function Logo({ href, className = "", size = "md" }: LogoProps) {
       className={`font-serif font-medium text-brown ${sizes[size]} ${className}`}
     >
       StreetWe
-      <span className="relative inline-block px-[0.12em] text-gold" aria-hidden>
+      <span className="relative inline-block px-[0.12em] text-brand" aria-hidden>
         ▲
       </span>
       lth Co.

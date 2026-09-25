@@ -29,7 +29,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   return (
     <div className="mx-auto grid max-w-[78rem] gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1fr_1fr]">
       <div data-reveal data-drift className="sw-panel flex min-h-[360px] items-end px-8 py-8 sm:min-h-[470px] sm:px-10 sm:py-10">
-        <p className="font-serif text-7xl text-gold/40">▲</p>
+        <p className="font-serif text-7xl text-brand/40">▲</p>
       </div>
 
       <div

@@ -6,7 +6,6 @@
   --sw-brown: #24150f;
   --sw-brown-soft: #5c493d;
   --sw-green: #355a47;
-  --sw-gold: #a9844f;
   --sw-border: #cdbb9f;
   --sw-muted: #75685d;
   --sw-white: #faf8f3;
@@ -18,7 +17,6 @@
   --color-brown: var(--sw-brown);
   --color-brown-soft: var(--sw-brown-soft);
   --color-brand: var(--sw-green);
-  --color-gold: var(--sw-gold);
   --color-border: var(--sw-border);
   --color-muted: var(--sw-muted);
   --color-white: var(--sw-white);
@@ -58,7 +56,7 @@ body {
     90deg,
     rgb(53 90 71 / 20%) 0%,
     rgb(53 90 71 / 88%) 52%,
-    rgb(169 132 79 / 68%) 100%
+    rgb(36 21 15 / 58%) 100%
   );
   box-shadow: 0 0 14px rgb(36 21 15 / 22%);
 }

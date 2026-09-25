@@ -146,7 +146,7 @@ export default function Home() {
             >
               {experiences.map((item) => (
                 <li key={item} className="flex gap-3">
-                  <span className="mt-3 h-1.5 w-1.5 flex-none rounded-full bg-gold" />
+                  <span className="mt-3 h-1.5 w-1.5 flex-none rounded-full bg-brand" />
                   <span>{item}</span>
                 </li>
               ))}
@@ -285,7 +285,7 @@ export default function Home() {
             </p>
             <ol data-stagger-group className="mt-6 space-y-6">
               <li className="border-l border-border pl-4">
-                <p className="text-[11px] uppercase tracking-[0.24em] text-gold">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-brand">
                   01
                 </p>
                 <p className="mt-2 text-brown-soft">
@@ -293,7 +293,7 @@ export default function Home() {
                 </p>
               </li>
               <li className="border-l border-border pl-4">
-                <p className="text-[11px] uppercase tracking-[0.24em] text-gold">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-brand">
                   02
                 </p>
                 <p className="mt-2 text-brown-soft">
@@ -301,7 +301,7 @@ export default function Home() {
                 </p>
               </li>
               <li className="border-l border-border pl-4">
-                <p className="text-[11px] uppercase tracking-[0.24em] text-gold">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-brand">
                   03
                 </p>
                 <p className="mt-2 text-brown-soft">
