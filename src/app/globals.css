@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --sw-cream: #c9d9ce;
-  --sw-ivory: #dce8df;
-  --sw-brown: #102117;
-  --sw-brown-soft: #2a4636;
-  --sw-green: #1f5a3f;
-  --sw-border: #7f9d8c;
-  --sw-muted: #4b6556;
-  --sw-white: #f1f7f3;
+  --sw-cream: #e8ddcd;
+  --sw-ivory: #f4ede2;
+  --sw-brown: #231913;
+  --sw-brown-soft: #5d4e43;
+  --sw-green: #2f6248;
+  --sw-border: #c6b59a;
+  --sw-muted: #7d6f61;
+  --sw-white: #faf6ef;
 }
 
 @theme inline {
@@ -36,9 +36,9 @@ body {
 .sw-body {
   background-color: var(--sw-cream);
   background-image:
-    radial-gradient(72% 44% at 8% -4%, rgb(31 90 63 / 24%), transparent 72%),
-    radial-gradient(58% 40% at 93% 10%, rgb(16 33 23 / 18%), transparent 74%),
-    linear-gradient(180deg, #dce8df 0%, #ccdace 40%, #bdcfbf 100%);
+    radial-gradient(70% 42% at 8% -4%, rgb(47 98 72 / 15%), transparent 72%),
+    radial-gradient(58% 40% at 93% 10%, rgb(35 25 19 / 12%), transparent 74%),
+    linear-gradient(180deg, #f4ede2 0%, #eee4d6 40%, #e8ddcd 100%);
   background-attachment: fixed;
 }
 
@@ -54,29 +54,29 @@ body {
   opacity: 0.52;
   background: linear-gradient(
     90deg,
-    rgb(31 90 63 / 24%) 0%,
-    rgb(31 90 63 / 88%) 52%,
-    rgb(16 33 23 / 64%) 100%
+    rgb(47 98 72 / 18%) 0%,
+    rgb(47 98 72 / 84%) 52%,
+    rgb(35 25 19 / 56%) 100%
   );
-  box-shadow: 0 0 16px rgb(16 33 23 / 24%);
+  box-shadow: 0 0 16px rgb(35 25 19 / 20%);
 }
 
 .sw-panel {
-  border: 1px solid rgb(88 119 102 / 42%);
+  border: 1px solid rgb(198 181 154 / 70%);
   background:
-    linear-gradient(145deg, rgb(241 247 243 / 84%) 0%, rgb(206 221 210 / 66%) 100%);
+    linear-gradient(145deg, rgb(250 246 239 / 90%) 0%, rgb(238 229 214 / 70%) 100%);
   border-radius: 1.15rem;
   overflow: hidden;
   box-shadow:
-    0 26px 48px -34px rgb(16 33 23 / 42%),
-    inset 0 1px 0 rgb(241 247 243 / 92%);
+    0 24px 42px -32px rgb(35 25 19 / 38%),
+    inset 0 1px 0 rgb(250 246 239 / 95%);
   will-change: transform;
 }
 
 .sw-cinematic-media {
   transform: translateZ(0);
   will-change: transform;
-  filter: hue-rotate(12deg) saturate(0.88) contrast(1.03);
+  filter: saturate(0.96) contrast(1.02);
 }
 
 .sw-light-sweep {
@@ -84,7 +84,7 @@ body {
     105deg,
     transparent 0%,
     transparent 44%,
-    rgb(241 247 243 / 11%) 50%,
+    rgb(250 246 239 / 13%) 50%,
     transparent 57%,
     transparent 100%
   );
@@ -112,13 +112,13 @@ body {
 }
 
 .sw-runway-token {
-  border: 1px solid rgb(31 90 63 / 36%);
-  background: rgb(241 247 243 / 64%);
+  border: 1px solid rgb(47 98 72 / 28%);
+  background: rgb(250 246 239 / 68%);
   padding: 0.55rem 1rem;
   font-size: 10px;
   letter-spacing: 0.26em;
   text-transform: uppercase;
-  color: rgb(26 74 52 / 95%);
+  color: rgb(47 98 72 / 95%);
 }
 
 .sw-scene-stage {
@@ -131,12 +131,12 @@ body {
   position: relative;
   min-height: 21rem;
   overflow: hidden;
-  border: 1px solid rgb(127 157 140 / 58%);
+  border: 1px solid rgb(198 181 154 / 58%);
   background: linear-gradient(
     145deg,
-    rgb(16 33 23 / 16%) 0%,
-    rgb(31 90 63 / 24%) 42%,
-    rgb(16 33 23 / 30%) 100%
+    rgb(35 25 19 / 14%) 0%,
+    rgb(47 98 72 / 20%) 42%,
+    rgb(35 25 19 / 28%) 100%
   );
 }
 
@@ -145,8 +145,8 @@ body {
   inset: 0;
   opacity: 0.35;
   background-image:
-    linear-gradient(to right, rgb(241 247 243 / 12%) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(241 247 243 / 12%) 1px, transparent 1px);
+    linear-gradient(to right, rgb(250 246 239 / 10%) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(250 246 239 / 10%) 1px, transparent 1px);
   background-size: 38px 38px;
 }
 
@@ -159,9 +159,9 @@ body {
   transform: translate(-50%, -50%);
   background: radial-gradient(
     circle,
-    rgb(241 247 243 / 34%) 0%,
-    rgb(31 90 63 / 28%) 36%,
-    rgb(16 33 23 / 24%) 62%,
+    rgb(250 246 239 / 36%) 0%,
+    rgb(47 98 72 / 24%) 36%,
+    rgb(35 25 19 / 24%) 62%,
     transparent 80%
   );
   filter: blur(14px);
@@ -194,8 +194,8 @@ body {
   height: 0.64rem;
   width: 0.64rem;
   border-radius: 9999px;
-  background: rgb(31 90 63 / 88%);
-  box-shadow: 0 0 18px rgb(31 90 63 / 40%);
+  background: rgb(47 98 72 / 86%);
+  box-shadow: 0 0 18px rgb(47 98 72 / 38%);
 }
 
 .sw-grain {
@@ -212,7 +212,7 @@ body {
     repeating-linear-gradient(
       112deg,
       transparent 0 84px,
-      rgb(16 33 23 / 22%) 84px 86px
+      rgb(35 25 19 / 20%) 84px 86px
     );
 }
 
@@ -236,7 +236,7 @@ a:focus-visible,
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid rgb(31 90 63 / 56%);
+  outline: 2px solid rgb(47 98 72 / 56%);
   outline-offset: 2px;
 }
 
@@ -280,8 +280,8 @@ button {
   .sw-motion-active .sw-scene-stage {
     min-height: 40rem;
     overflow: hidden;
-    border: 1px solid rgb(127 157 140 / 62%);
-    background: rgb(220 232 223 / 46%);
+    border: 1px solid rgb(198 181 154 / 62%);
+    background: rgb(244 237 226 / 46%);
   }
 
   .sw-motion-active .sw-scene-focus {

@@ -1,0 +1,16 @@
+<svg width="1600" height="2000" viewBox="0 0 1600 2000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="120" x2="1460" y2="1880" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#D9C3A2"/>
+      <stop offset="0.5" stop-color="#EBDDC8"/>
+      <stop offset="1" stop-color="#CFDDD1"/>
+    </linearGradient>
+    <linearGradient id="flow" x1="240" y1="820" x2="1460" y2="1320" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2F6248" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#2F6248" stop-opacity="0.04"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="2000" fill="url(#bg)"/>
+  <path d="M-120 1180C250 1030 620 1010 930 1110C1240 1210 1530 1470 1620 1780C1710 2090 1450 2240 1130 2250C810 2260 480 2180 220 1990C-40 1800 -280 1400 -120 1180Z" fill="url(#flow)"/>
+</svg>

@@ -28,11 +28,11 @@ export function CartDrawer() {
     <div className="fixed inset-0 z-50">
       <button
         type="button"
-        className="absolute inset-0 bg-brand/44 backdrop-blur-sm"
+        className="absolute inset-0 bg-brown/36 backdrop-blur-sm"
         aria-label="Fermer le panier"
         onClick={() => setOpen(false)}
       />
-      <aside className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col border-l border-border bg-cream shadow-2xl">
+      <aside className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col border-l border-border bg-ivory shadow-2xl">
         <div className="flex items-center justify-between border-b border-border px-6 py-5">
           <p className="text-[11px] uppercase tracking-[0.24em] text-brown">
             Votre sélection

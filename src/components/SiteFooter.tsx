@@ -4,7 +4,7 @@ import { Logo } from "@/components/Logo";
 
 export function SiteFooter() {
   return (
-    <footer className="mt-auto border-t border-border/80 bg-cream/80">
+    <footer className="mt-auto border-t border-border/80 bg-ivory/84">
       <div className="mx-auto max-w-[78rem] px-4 py-14 sm:px-6 sm:py-16">
         <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr_0.9fr]">
           <div className="space-y-5">

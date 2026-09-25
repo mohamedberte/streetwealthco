@@ -1,0 +1,22 @@
+<svg width="2600" height="1300" viewBox="0 0 2600 1300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="170" y1="120" x2="2380" y2="1140" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#EFE4D4"/>
+      <stop offset="0.38" stop-color="#F7F0E6"/>
+      <stop offset="0.72" stop-color="#DEE8DD"/>
+      <stop offset="1" stop-color="#C7D8CC"/>
+    </linearGradient>
+    <linearGradient id="curve1" x1="-50" y1="780" x2="1700" y2="500" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2F6248" stop-opacity="0.26"/>
+      <stop offset="1" stop-color="#2F6248" stop-opacity="0.04"/>
+    </linearGradient>
+    <linearGradient id="curve2" x1="520" y1="220" x2="2520" y2="1140" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#16221C" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#16221C" stop-opacity="0.03"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="2600" height="1300" fill="url(#bg)"/>
+  <path d="M-180 940C250 720 620 660 960 770C1300 880 1680 1170 2780 1010V1300H-180V940Z" fill="url(#curve1)"/>
+  <path d="M400 180C860 60 1280 170 1690 420C2100 670 2420 930 2740 840V1300H400V180Z" fill="url(#curve2)"/>
+</svg>

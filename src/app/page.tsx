@@ -5,31 +5,31 @@ import { brand } from "@/lib/brand";
 
 const heroSignals = [
   "Capsules limitées",
-  "Streetwear chic",
+  "Silhouettes urbaines",
   "Sans frontières",
 ];
 
 const campaignChapters = [
   {
-    kicker: "Acte I",
+    kicker: "Chapitre I",
     title: "Rue x Raffinement",
-    body: "La rue donne l'impulsion. Le chic apporte la tenue. StreetWealth Co. compose une allure urbaine plus précise, plus calme, plus assumée.",
+    body: "La rue donne l'impulsion. Le chic apporte la tenue. StreetWealth Co. compose une allure urbaine précise, calme et assumée.",
     note: "Énergie urbaine, coupe nette, présence durable.",
-    image: "/visuals/story-rue-raffinement.svg",
+    image: "/visuals/rework-chapter-a.svg",
   },
   {
-    kicker: "Acte II",
+    kicker: "Chapitre II",
     title: "Style sans barrières",
     body: "Ni uniforme social, ni posture fermée. Notre silhouette relie les mondes et laisse à chacun une place lisible dans le même mouvement.",
     note: "Ouverture, équilibre, trajectoires partagées.",
-    image: "/visuals/story-frontieres.svg",
+    image: "/visuals/rework-chapter-b.svg",
   },
   {
-    kicker: "Acte III",
+    kicker: "Chapitre III",
     title: "Streetwear chic",
     body: "Hoodies, tees, pulls, polos: un vestiaire urbain chic pensé pour durer, circuler et rester juste du matin à la nuit.",
     note: "Confort net, matières posées, ligne continue.",
-    image: "/visuals/story-silhouette.svg",
+    image: "/visuals/rework-chapter-c.svg",
   },
 ];
 
@@ -49,7 +49,7 @@ const gatewayPanels = [
     title: "Vestiaire urbain raffiné",
     body: "Explorez les pièces qui fusionnent l'énergie streetwear et une allure chic assumée.",
     cta: "Explorer",
-    image: "/visuals/story-frontieres.svg",
+    image: "/visuals/rework-chapter-b.svg",
   },
   {
     href: "/acces",
@@ -57,7 +57,7 @@ const gatewayPanels = [
     title: "Capsules limitées",
     body: "Accédez aux drops du moment et composez votre sélection sur cet appareil.",
     cta: "Demander l'accès",
-    image: "/visuals/story-silhouette.svg",
+    image: "/visuals/rework-chapter-c.svg",
   },
 ];
 
@@ -66,51 +66,48 @@ export default function Home() {
     <div className="overflow-x-clip">
       <section
         data-parallax-root
-        className="relative isolate min-h-[92svh] overflow-hidden border-b border-border/80"
+        className="relative isolate min-h-[94svh] overflow-hidden border-b border-border/70"
       >
-        <div data-parallax="10" className="absolute inset-0 hidden sm:block">
+        <div data-parallax="8" className="absolute inset-0 hidden sm:block">
           <Image
-            src="/visuals/hero-cinematic.svg"
+            src="/visuals/rework-hero.svg"
             alt=""
             fill
             priority
             sizes="100vw"
-            data-zoom="1.14"
+            data-zoom="1.1"
             className="sw-cinematic-media object-cover"
           />
         </div>
-        <div
-          data-parallax="7"
-          className="absolute inset-0 sm:hidden"
-        >
+        <div data-parallax="6" className="absolute inset-0 sm:hidden">
           <Image
-            src="/visuals/hero-mobile-cinematic.svg"
+            src="/visuals/rework-hero-mobile.svg"
             alt=""
             fill
             priority
             sizes="100vw"
-            data-zoom="1.12"
+            data-zoom="1.08"
             className="sw-cinematic-media object-cover"
           />
         </div>
         <div
-          data-parallax="12"
-          className="sw-motion-layer absolute inset-0 bg-[radial-gradient(circle_at_14%_22%,rgba(241,247,243,0.28),transparent_56%)]"
+          data-parallax="10"
+          className="sw-motion-layer absolute inset-0 bg-[radial-gradient(circle_at_18%_26%,rgba(247,243,236,0.44),transparent_54%)]"
         />
         <div
           data-parallax="-8"
-          className="sw-motion-layer absolute inset-0 bg-[linear-gradient(128deg,rgba(16,33,23,0.52)_0%,rgba(16,33,23,0.3)_44%,rgba(16,33,23,0.68)_100%)]"
+          className="sw-motion-layer absolute inset-0 bg-[linear-gradient(126deg,rgba(21,30,24,0.34)_0%,rgba(21,30,24,0.14)_44%,rgba(21,30,24,0.44)_100%)]"
         />
         <div
-          data-parallax="14"
-          className="sw-motion-layer absolute inset-0 bg-[radial-gradient(circle_at_78%_86%,rgba(53,90,71,0.38),transparent_40%)]"
+          data-parallax="12"
+          className="sw-motion-layer absolute inset-0 bg-[radial-gradient(circle_at_76%_78%,rgba(47,98,72,0.28),transparent_44%)]"
         />
         <div className="sw-light-sweep pointer-events-none absolute inset-0" />
-        <div className="absolute inset-x-0 bottom-0 h-52 bg-gradient-to-t from-cream via-cream/74 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-52 bg-gradient-to-t from-cream via-cream/76 to-transparent" />
 
-        <div className="relative mx-auto flex min-h-[92svh] max-w-[84rem] items-end px-4 pb-14 pt-24 sm:px-6 sm:pb-20 lg:pb-24">
+        <div className="relative mx-auto flex min-h-[94svh] max-w-[86rem] items-end px-4 pb-14 pt-24 sm:px-6 sm:pb-20 lg:pb-24">
           <div data-reveal data-reveal-delay="0.04" className="max-w-3xl">
-            <p className="text-[11px] uppercase tracking-[0.34em] text-ivory/88">
+            <p className="text-[11px] uppercase tracking-[0.34em] text-ivory/92">
               Streetwear raffiné · {brand.city}
             </p>
             <div className="mt-7">
@@ -121,17 +118,17 @@ export default function Home() {
               <br />
               l&apos;élégance.
             </h1>
-            <p className="mt-6 max-w-2xl text-base leading-8 text-ivory/90 sm:text-xl">
+            <p className="mt-6 max-w-2xl text-base leading-8 text-ivory/92 sm:text-xl">
               {brand.tagline}
             </p>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-ivory/80">
+            <p className="mt-3 max-w-2xl text-base leading-7 text-ivory/82">
               Notre ambition: unir les codes street et premium pour créer un
               style urbain chic qui transcende les frontières sociales.
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
               <Link
                 href="/maison"
-                className="w-full border border-ivory/58 bg-brand/26 px-8 py-3 text-center text-[11px] uppercase tracking-[0.3em] text-ivory backdrop-blur-[2px] hover:bg-ivory hover:text-brand sm:w-auto"
+                className="w-full border border-ivory/66 bg-ivory/14 px-8 py-3 text-center text-[11px] uppercase tracking-[0.3em] text-ivory backdrop-blur-[2px] hover:bg-ivory hover:text-brand sm:w-auto"
               >
                 La Maison
               </Link>
@@ -145,10 +142,10 @@ export default function Home() {
 
             <ul
               data-stagger-group
-              className="mt-9 grid gap-3 text-[10px] uppercase tracking-[0.24em] text-ivory/84 sm:grid-cols-3 sm:text-[11px]"
+              className="mt-10 grid gap-3 text-[10px] uppercase tracking-[0.24em] text-ivory/84 sm:grid-cols-3 sm:text-[11px]"
             >
               {heroSignals.map((signal) => (
-                <li key={signal} className="border-t border-ivory/34 pt-3">
+                <li key={signal} className="border-t border-ivory/36 pt-3">
                   {signal}
                 </li>
               ))}
@@ -160,7 +157,7 @@ export default function Home() {
       <section data-parallax-root className="relative isolate overflow-hidden border-y border-border/70">
         <div data-parallax="9" className="absolute inset-0">
           <Image
-            src="/visuals/bridge-panorama.svg"
+            src="/visuals/rework-panorama.svg"
             alt=""
             fill
             sizes="100vw"
@@ -168,8 +165,8 @@ export default function Home() {
             className="sw-cinematic-media object-cover"
           />
         </div>
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(220,232,223,0.38)_0%,rgba(220,232,223,0.78)_52%,rgba(220,232,223,0.94)_100%)]" />
-        <div className="relative mx-auto max-w-[84rem] px-4 py-16 sm:px-6 sm:py-24">
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(246,240,231,0.45)_0%,rgba(237,230,218,0.86)_52%,rgba(231,223,209,0.95)_100%)]" />
+        <div className="relative mx-auto max-w-[86rem] px-4 py-16 sm:px-6 sm:py-24">
           <p
             data-reveal
             className="max-w-5xl font-serif text-3xl leading-[1.14] text-brown sm:text-5xl lg:text-6xl"
@@ -180,7 +177,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-b border-border/80 bg-brand/12 py-5 overflow-hidden">
+      <section className="border-b border-border/80 bg-ivory/60 py-5 overflow-hidden">
         <div className="sw-runway-wrap">
           <div data-runway-track className="sw-runway-track">
             {runwayTokens.concat(runwayTokens).map((token, index) => (
@@ -192,7 +189,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-[84rem] px-4 py-16 sm:px-6 sm:py-24">
+      <section className="mx-auto max-w-[86rem] px-4 py-16 sm:px-6 sm:py-24">
         <div data-reveal className="max-w-3xl">
           <p className="text-[11px] uppercase tracking-[0.28em] text-brand">
             Récit de campagne
@@ -223,7 +220,7 @@ export default function Home() {
                   data-zoom="1.1"
                   className="sw-cinematic-media object-cover transition-transform duration-[1500ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.045]"
                 />
-                <div className="absolute inset-0 bg-[linear-gradient(178deg,rgba(16,33,23,0.12)_8%,rgba(16,33,23,0.78)_100%)]" />
+                <div className="absolute inset-0 bg-[linear-gradient(178deg,rgba(20,26,21,0.08)_8%,rgba(20,26,21,0.72)_100%)]" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
                   <p className="text-[11px] uppercase tracking-[0.28em] text-ivory/84">
                     {chapter.kicker}
@@ -249,8 +246,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-y border-border/80 bg-brand/14">
-        <div className="mx-auto grid max-w-[84rem] gap-10 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-[1fr_1fr] lg:items-center">
+      <section className="border-y border-border/80 bg-ivory/54">
+        <div className="mx-auto grid max-w-[86rem] gap-10 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-[1fr_1fr] lg:items-center">
           <div data-reveal>
             <p className="text-[11px] uppercase tracking-[0.28em] text-brand">
               Manifeste
@@ -309,7 +306,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-[84rem] px-4 py-16 sm:px-6 sm:py-24">
+      <section className="mx-auto max-w-[86rem] px-4 py-16 sm:px-6 sm:py-24">
         <div data-reveal className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <h2 className="max-w-xl font-serif text-3xl leading-tight text-brown sm:text-5xl">
             Streetwear, pulls, polos: le vestiaire urbain version chic.
@@ -340,8 +337,8 @@ export default function Home() {
                 data-zoom="1.1"
                 className="sw-cinematic-media object-cover transition-transform duration-[1300ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
               />
-              <div className="absolute inset-0 bg-[linear-gradient(168deg,rgba(16,33,23,0.24)_4%,rgba(16,33,23,0.82)_88%)]" />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(241,247,243,0.2),transparent_48%)]" />
+              <div className="absolute inset-0 bg-[linear-gradient(168deg,rgba(20,26,21,0.2)_4%,rgba(20,26,21,0.82)_88%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(246,240,231,0.2),transparent_48%)]" />
 
               <div className="relative z-10 flex h-full flex-col justify-end p-7 sm:p-10">
                 <p className="text-[11px] uppercase tracking-[0.24em] text-ivory/80">
@@ -362,7 +359,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-t border-border/80 bg-brand/16">
+      <section className="border-t border-border/80 bg-ivory/66">
         <div className="mx-auto max-w-[78rem] px-4 py-16 text-center sm:px-6 sm:py-20">
           <p data-reveal className="font-serif text-3xl text-brown sm:text-4xl">
             Un style qui rassemble, au-delà des frontières.
