@@ -10,7 +10,7 @@ const nav = [
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-50 border-b border-border/70 bg-ivory/85 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-border/70 bg-cream/78 backdrop-blur-xl">
       <div className="border-b border-border/60 px-4 py-2 text-center text-[9px] uppercase tracking-[0.26em] text-muted sm:px-6 sm:text-[10px] sm:tracking-[0.28em]">
         Rue + Élégance · Éditions limitées · Paris
       </div>

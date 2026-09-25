@@ -31,7 +31,7 @@ export default function CollectionsPage() {
             data-drift
             className="sw-panel overflow-hidden"
           >
-            <div className="flex aspect-[4/3] items-end border-b border-border/70 bg-cream/70 px-6 py-6 sm:px-7">
+            <div className="flex aspect-[4/3] items-end border-b border-border/70 bg-brand/14 px-6 py-6 sm:px-7">
               <p className="font-serif text-4xl text-brand/50">▲</p>
             </div>
             <div className="p-6 sm:p-7">

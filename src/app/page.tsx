@@ -95,11 +95,11 @@ export default function Home() {
         </div>
         <div
           data-parallax="12"
-          className="sw-motion-layer absolute inset-0 bg-[radial-gradient(circle_at_14%_22%,rgba(250,248,243,0.34),transparent_54%)]"
+          className="sw-motion-layer absolute inset-0 bg-[radial-gradient(circle_at_14%_22%,rgba(241,247,243,0.28),transparent_56%)]"
         />
         <div
           data-parallax="-8"
-          className="sw-motion-layer absolute inset-0 bg-[linear-gradient(128deg,rgba(36,21,15,0.48)_0%,rgba(36,21,15,0.28)_44%,rgba(36,21,15,0.62)_100%)]"
+          className="sw-motion-layer absolute inset-0 bg-[linear-gradient(128deg,rgba(16,33,23,0.52)_0%,rgba(16,33,23,0.3)_44%,rgba(16,33,23,0.68)_100%)]"
         />
         <div
           data-parallax="14"
@@ -131,7 +131,7 @@ export default function Home() {
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
               <Link
                 href="/maison"
-                className="w-full border border-ivory/65 bg-ivory/12 px-8 py-3 text-center text-[11px] uppercase tracking-[0.3em] text-ivory backdrop-blur-[2px] hover:bg-ivory hover:text-brand sm:w-auto"
+                className="w-full border border-ivory/58 bg-brand/26 px-8 py-3 text-center text-[11px] uppercase tracking-[0.3em] text-ivory backdrop-blur-[2px] hover:bg-ivory hover:text-brand sm:w-auto"
               >
                 La Maison
               </Link>
@@ -168,7 +168,7 @@ export default function Home() {
             className="sw-cinematic-media object-cover"
           />
         </div>
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(243,235,221,0.46)_0%,rgba(243,235,221,0.82)_52%,rgba(243,235,221,0.96)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(220,232,223,0.38)_0%,rgba(220,232,223,0.78)_52%,rgba(220,232,223,0.94)_100%)]" />
         <div className="relative mx-auto max-w-[84rem] px-4 py-16 sm:px-6 sm:py-24">
           <p
             data-reveal
@@ -180,7 +180,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-b border-border/80 bg-ivory/60 py-5 overflow-hidden">
+      <section className="border-b border-border/80 bg-brand/12 py-5 overflow-hidden">
         <div className="sw-runway-wrap">
           <div data-runway-track className="sw-runway-track">
             {runwayTokens.concat(runwayTokens).map((token, index) => (
@@ -223,7 +223,7 @@ export default function Home() {
                   data-zoom="1.1"
                   className="sw-cinematic-media object-cover transition-transform duration-[1500ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.045]"
                 />
-                <div className="absolute inset-0 bg-[linear-gradient(178deg,rgba(36,21,15,0.08)_8%,rgba(36,21,15,0.74)_100%)]" />
+                <div className="absolute inset-0 bg-[linear-gradient(178deg,rgba(16,33,23,0.12)_8%,rgba(16,33,23,0.78)_100%)]" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
                   <p className="text-[11px] uppercase tracking-[0.28em] text-ivory/84">
                     {chapter.kicker}
@@ -249,7 +249,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-y border-border/80 bg-ivory/65">
+      <section className="border-y border-border/80 bg-brand/14">
         <div className="mx-auto grid max-w-[84rem] gap-10 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-[1fr_1fr] lg:items-center">
           <div data-reveal>
             <p className="text-[11px] uppercase tracking-[0.28em] text-brand">
@@ -340,8 +340,8 @@ export default function Home() {
                 data-zoom="1.1"
                 className="sw-cinematic-media object-cover transition-transform duration-[1300ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
               />
-              <div className="absolute inset-0 bg-[linear-gradient(168deg,rgba(36,21,15,0.2)_4%,rgba(36,21,15,0.8)_88%)]" />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(250,248,243,0.24),transparent_48%)]" />
+              <div className="absolute inset-0 bg-[linear-gradient(168deg,rgba(16,33,23,0.24)_4%,rgba(16,33,23,0.82)_88%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(241,247,243,0.2),transparent_48%)]" />
 
               <div className="relative z-10 flex h-full flex-col justify-end p-7 sm:p-10">
                 <p className="text-[11px] uppercase tracking-[0.24em] text-ivory/80">
@@ -362,7 +362,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-t border-border/80 bg-ivory/70">
+      <section className="border-t border-border/80 bg-brand/16">
         <div className="mx-auto max-w-[78rem] px-4 py-16 text-center sm:px-6 sm:py-20">
           <p data-reveal className="font-serif text-3xl text-brown sm:text-4xl">
             Un style qui rassemble, au-delà des frontières.
