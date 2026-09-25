@@ -15,7 +15,7 @@ export default async function AccessPage() {
   return (
     <div className="mx-auto flex min-h-[72vh] max-w-2xl flex-col justify-center px-4 py-16 sm:px-6 sm:py-20">
       <div data-reveal data-drift className="sw-panel p-8 sm:p-10">
-        <p className="text-[11px] uppercase tracking-[0.3em] text-gold">
+        <p className="text-[11px] uppercase tracking-[0.3em] text-brand">
           Accès boutique
         </p>
         <h1 className="mt-4 font-serif text-4xl text-brown sm:text-5xl">

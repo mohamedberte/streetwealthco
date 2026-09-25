@@ -19,7 +19,7 @@ export function AccessForm() {
           type="password"
           autoComplete="off"
           required
-          className="w-full border-0 border-b border-border bg-transparent py-3 font-serif text-3xl text-brown outline-none transition-colors focus:border-gold"
+          className="w-full border-0 border-b border-border bg-transparent py-3 font-serif text-3xl text-brown outline-none transition-colors focus:border-brand"
         />
       </label>
       {state.error ? (
@@ -28,7 +28,7 @@ export function AccessForm() {
       <button
         type="submit"
         disabled={pending}
-        className="w-full bg-brown px-6 py-4 text-[11px] uppercase tracking-[0.3em] text-ivory transition-colors hover:bg-brown-soft disabled:opacity-60"
+        className="w-full bg-brand px-6 py-4 text-[11px] uppercase tracking-[0.3em] text-ivory transition-colors hover:bg-brand/88 disabled:opacity-60"
       >
         {pending ? "Vérification…" : "Entrer"}
       </button>

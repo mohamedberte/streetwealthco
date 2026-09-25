@@ -44,7 +44,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         >
           Retour à la boutique
         </Link>
-        <p className="mt-8 text-[11px] uppercase tracking-[0.2em] text-gold">
+        <p className="mt-8 text-[11px] uppercase tracking-[0.2em] text-brand">
           {product.edition}
         </p>
         <h1 className="mt-3 font-serif text-4xl text-brown sm:text-5xl">{product.name}</h1>

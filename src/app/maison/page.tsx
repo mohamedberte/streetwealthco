@@ -9,7 +9,7 @@ export default function MaisonPage() {
   return (
     <article className="mx-auto max-w-[78rem] px-4 py-16 sm:px-6 sm:py-20">
       <header data-reveal className="max-w-4xl">
-        <p className="text-[11px] uppercase tracking-[0.3em] text-gold">
+        <p className="text-[11px] uppercase tracking-[0.3em] text-brand">
           La Maison
         </p>
         <h1 className="mt-4 font-serif text-4xl leading-tight text-brown sm:text-6xl">

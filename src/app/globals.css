@@ -5,8 +5,8 @@
   --sw-ivory: #f3ebdd;
   --sw-brown: #24150f;
   --sw-brown-soft: #5c493d;
-  --sw-gold-classic: #a9844f;
-  --sw-gold: #355a47;
+  --sw-green: #355a47;
+  --sw-gold: #a9844f;
   --sw-border: #cdbb9f;
   --sw-muted: #75685d;
   --sw-white: #faf8f3;
@@ -17,6 +17,7 @@
   --color-ivory: var(--sw-ivory);
   --color-brown: var(--sw-brown);
   --color-brown-soft: var(--sw-brown-soft);
+  --color-brand: var(--sw-green);
   --color-gold: var(--sw-gold);
   --color-border: var(--sw-border);
   --color-muted: var(--sw-muted);
@@ -56,16 +57,16 @@ body {
   background: linear-gradient(
     90deg,
     rgb(53 90 71 / 20%) 0%,
-    rgb(53 90 71 / 88%) 38%,
-    rgb(36 21 15 / 75%) 100%
+    rgb(53 90 71 / 88%) 52%,
+    rgb(169 132 79 / 68%) 100%
   );
   box-shadow: 0 0 14px rgb(36 21 15 / 22%);
 }
 
 .sw-panel {
-  border: 1px solid rgb(205 187 159 / 76%);
+  border: 1px solid rgb(83 111 96 / 35%);
   background:
-    linear-gradient(145deg, rgb(250 248 243 / 80%) 0%, rgb(243 235 221 / 62%) 100%);
+    linear-gradient(145deg, rgb(250 248 243 / 84%) 0%, rgb(225 233 225 / 62%) 100%);
   box-shadow:
     0 24px 45px -30px rgb(36 21 15 / 40%),
     inset 0 1px 0 rgb(250 248 243 / 95%);
@@ -92,13 +93,13 @@ body {
 }
 
 .sw-runway-token {
-  border: 1px solid rgb(205 187 159 / 70%);
+  border: 1px solid rgb(53 90 71 / 35%);
   background: rgb(250 248 243 / 72%);
   padding: 0.55rem 1rem;
   font-size: 10px;
   letter-spacing: 0.26em;
   text-transform: uppercase;
-  color: var(--sw-brown-soft);
+  color: var(--sw-green);
 }
 
 .sw-scene-stage {
@@ -201,7 +202,7 @@ body {
 }
 
 ::selection {
-  background: var(--sw-gold);
+  background: var(--sw-green);
   color: var(--sw-ivory);
 }
 

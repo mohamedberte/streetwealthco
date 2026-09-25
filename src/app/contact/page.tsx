@@ -10,7 +10,7 @@ export default function ContactPage() {
   return (
     <div className="mx-auto grid max-w-[78rem] gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1.02fr_0.98fr]">
       <div data-reveal data-drift className="sw-panel p-8 sm:p-10">
-        <p className="text-[11px] uppercase tracking-[0.28em] text-gold">
+        <p className="text-[11px] uppercase tracking-[0.28em] text-brand">
           Contact
         </p>
         <h1 className="mt-4 font-serif text-4xl leading-tight text-brown sm:text-6xl">

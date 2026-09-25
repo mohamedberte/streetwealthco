@@ -115,13 +115,13 @@ export default function Home() {
             <div className="mt-11 flex flex-col gap-4 sm:flex-row">
               <Link
                 href="/maison"
-                className="w-full border border-brown/85 px-8 py-3 text-center text-[11px] uppercase tracking-[0.3em] text-brown hover:bg-brown hover:text-ivory sm:w-auto"
+                className="w-full border border-brand/75 px-8 py-3 text-center text-[11px] uppercase tracking-[0.3em] text-brand hover:bg-brand hover:text-ivory sm:w-auto"
               >
                 La Maison
               </Link>
               <Link
                 href="/boutique"
-                className="w-full bg-brown px-8 py-3 text-center text-[11px] uppercase tracking-[0.3em] text-ivory hover:bg-brown-soft sm:w-auto"
+                className="w-full bg-brand px-8 py-3 text-center text-[11px] uppercase tracking-[0.3em] text-ivory hover:bg-brand/88 sm:w-auto"
               >
                 Entrer en boutique
               </Link>
@@ -184,7 +184,7 @@ export default function Home() {
 
       <section className="mx-auto max-w-[78rem] px-4 py-16 sm:px-6 sm:py-24">
         <div data-reveal className="max-w-3xl">
-          <p className="text-[11px] uppercase tracking-[0.28em] text-gold">
+          <p className="text-[11px] uppercase tracking-[0.28em] text-brand">
             Récit StreetWealth
           </p>
           <h2 className="mt-4 font-serif text-4xl leading-tight text-brown sm:text-6xl">
@@ -206,7 +206,7 @@ export default function Home() {
           <div className="sw-scene-copy-stack">
             {bridgeScenes.map((scene) => (
               <article key={scene.title} data-scene-copy className="sw-panel sw-scene-copy">
-                <p className="text-[11px] uppercase tracking-[0.28em] text-gold">
+                <p className="text-[11px] uppercase tracking-[0.28em] text-brand">
                   {scene.kicker}
                 </p>
                 <h3 className="mt-3 font-serif text-2xl leading-tight text-brown sm:text-4xl">
@@ -256,7 +256,7 @@ export default function Home() {
       <section className="border-y border-border/80 bg-ivory/65">
         <div className="mx-auto grid max-w-[78rem] gap-10 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-[1fr_1fr] lg:items-center">
           <div data-reveal>
-            <p className="text-[11px] uppercase tracking-[0.28em] text-gold">
+            <p className="text-[11px] uppercase tracking-[0.28em] text-brand">
               Manifeste
             </p>
             <h2 className="mt-4 max-w-xl font-serif text-4xl leading-tight text-brown sm:text-5xl">
@@ -343,7 +343,7 @@ export default function Home() {
               Explorez les pièces qui fusionnent l'énergie streetwear et une
               allure chic assumée.
             </p>
-            <p className="mt-8 text-[11px] uppercase tracking-[0.24em] text-gold group-hover:text-brown">
+            <p className="mt-8 text-[11px] uppercase tracking-[0.24em] text-brand group-hover:text-brown">
               Explorer
             </p>
           </Link>
@@ -365,7 +365,7 @@ export default function Home() {
               Accédez aux drops du moment et composez votre sélection sur cet
               appareil.
             </p>
-            <p className="mt-8 text-[11px] uppercase tracking-[0.24em] text-gold group-hover:text-brown">
+            <p className="mt-8 text-[11px] uppercase tracking-[0.24em] text-brand group-hover:text-brown">
               Demander l&apos;accès
             </p>
           </Link>

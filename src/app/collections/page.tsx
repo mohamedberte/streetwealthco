@@ -10,7 +10,7 @@ export default function CollectionsPage() {
   return (
     <div className="mx-auto max-w-[78rem] px-4 py-16 sm:px-6 sm:py-20">
       <div data-reveal className="max-w-3xl">
-        <p className="text-[11px] uppercase tracking-[0.28em] text-gold">
+        <p className="text-[11px] uppercase tracking-[0.28em] text-brand">
           Collections
         </p>
         <h1 className="mt-4 font-serif text-4xl leading-tight text-brown sm:text-6xl">
@@ -52,7 +52,7 @@ export default function CollectionsPage() {
       <p data-reveal className="mt-16 text-center">
         <Link
           href="/boutique"
-          className="text-[11px] uppercase tracking-[0.28em] text-gold hover:text-brown"
+          className="text-[11px] uppercase tracking-[0.28em] text-brand hover:text-brown"
         >
           Entrer dans la boutique privée
         </Link>

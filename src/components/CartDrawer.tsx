@@ -98,7 +98,7 @@ export function CartDrawer() {
             <Link
               href="/boutique"
               onClick={() => setOpen(false)}
-              className="flex-1 bg-brown px-4 py-3 text-center text-[11px] uppercase tracking-[0.2em] text-ivory hover:bg-brown-soft"
+              className="flex-1 bg-brand px-4 py-3 text-center text-[11px] uppercase tracking-[0.2em] text-ivory hover:bg-brand/88"
             >
               Boutique
             </Link>

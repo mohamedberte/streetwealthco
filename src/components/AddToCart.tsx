@@ -33,8 +33,8 @@ export function AddToCart({ slug, name, price }: AddToCartProps) {
               key={value}
               className={`cursor-pointer border px-4 py-2 text-[11px] tracking-[0.18em] ${
                 size === value
-                  ? "border-brown bg-brown text-ivory"
-                  : "border-border text-brown hover:border-brown"
+                  ? "border-brand bg-brand text-ivory"
+                  : "border-border text-brown hover:border-brand"
               }`}
             >
               <input
@@ -52,7 +52,7 @@ export function AddToCart({ slug, name, price }: AddToCartProps) {
       </fieldset>
       <button
         type="submit"
-        className="w-full bg-brown px-6 py-4 text-[11px] uppercase tracking-[0.3em] text-ivory transition-colors hover:bg-brown-soft"
+        className="w-full bg-brand px-6 py-4 text-[11px] uppercase tracking-[0.3em] text-ivory transition-colors hover:bg-brand/88"
       >
         Réserver la pièce
       </button>
