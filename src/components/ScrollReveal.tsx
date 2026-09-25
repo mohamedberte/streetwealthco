@@ -45,7 +45,13 @@ export function ScrollReveal() {
 
       const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
       const isCoarse = window.matchMedia("(pointer: coarse)").matches;
+      const isTablet = window.matchMedia("(min-width: 768px)").matches;
       const enableHeavyScrollFx = isDesktop && !isCoarse;
+      const enableMediumScrollFx = !enableHeavyScrollFx && !isCoarse && isTablet;
+
+      const revealDistance = enableHeavyScrollFx ? 58 : isTablet ? 36 : 24;
+      const revealBlur = enableHeavyScrollFx ? 8 : isTablet ? 5 : 3;
+      const revealDuration = enableHeavyScrollFx ? 1.2 : isTablet ? 0.9 : 0.72;
 
       if (enableHeavyScrollFx) {
         document.documentElement.classList.add("sw-motion-active");
@@ -84,15 +90,15 @@ export function ScrollReveal() {
           gsap.fromTo(
             element,
             {
-              y: enableHeavyScrollFx ? 58 : 30,
+              y: revealDistance,
               autoAlpha: 0,
-              filter: enableHeavyScrollFx ? "blur(8px)" : "blur(3px)",
+              filter: `blur(${revealBlur}px)`,
             },
             {
               y: 0,
               autoAlpha: 1,
               filter: "blur(0px)",
-              duration: enableHeavyScrollFx ? 1.2 : 0.8,
+              duration: revealDuration,
               delay,
               ease: "power3.out",
               clearProps: "filter,willChange",
@@ -114,13 +120,13 @@ export function ScrollReveal() {
             gsap.fromTo(
               element,
               {
-                y: 16,
+                y: isTablet ? 18 : 12,
                 autoAlpha: 0.85,
               },
               {
                 y: 0,
                 autoAlpha: 1,
-                duration: 0.65,
+                duration: isTablet ? 0.72 : 0.58,
                 ease: "power2.out",
                 scrollTrigger: {
                   trigger: element,
@@ -296,7 +302,7 @@ export function ScrollReveal() {
         }
 
         parallaxElements.forEach((element) => {
-          if (!enableHeavyScrollFx) {
+          if (!enableHeavyScrollFx && !enableMediumScrollFx) {
             return;
           }
 
@@ -305,19 +311,21 @@ export function ScrollReveal() {
             return;
           }
 
+          const scaledAmount = enableHeavyScrollFx ? amount : amount * 0.34;
+
           const trigger =
             element.closest<HTMLElement>("[data-parallax-root]") ??
             element.parentElement ??
             element;
 
           gsap.to(element, {
-            yPercent: amount,
+            yPercent: scaledAmount,
             ease: "none",
             scrollTrigger: {
               trigger,
               start: "top bottom",
               end: "bottom top",
-              scrub: 1.1,
+              scrub: enableHeavyScrollFx ? 1.1 : 0.7,
             },
           });
         });
@@ -382,18 +390,18 @@ export function ScrollReveal() {
         );
 
         runwayTracks.forEach((track) => {
-          if (!enableHeavyScrollFx) {
+          if (!enableHeavyScrollFx && !enableMediumScrollFx) {
             return;
           }
 
           gsap.to(track, {
-            xPercent: -18,
+            xPercent: enableHeavyScrollFx ? -18 : -8,
             ease: "none",
             scrollTrigger: {
               trigger: track,
               start: "top bottom",
               end: "bottom top",
-              scrub: 0.75,
+              scrub: enableHeavyScrollFx ? 0.75 : 0.5,
             },
           });
         });

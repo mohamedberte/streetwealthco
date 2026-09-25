@@ -15,7 +15,7 @@ export function SiteHeader() {
         Rue + Élégance · Éditions limitées · Paris
       </div>
       <div className="mx-auto max-w-[78rem] px-4 py-4 sm:px-6">
-        <div className="grid items-center gap-4 md:grid-cols-[1fr_auto_1fr]">
+        <div className="grid items-center gap-3 md:grid-cols-[1fr_auto_1fr] md:gap-4">
           <nav className="hidden items-center gap-8 text-[11px] uppercase tracking-[0.24em] text-brown-soft md:flex">
             {nav.map((item) => (
               <Link
@@ -30,19 +30,19 @@ export function SiteHeader() {
           <div className="justify-self-center">
             <Logo size="sm" />
           </div>
-          <div className="flex items-center justify-end gap-4 text-[10px] uppercase tracking-[0.2em] sm:gap-6 sm:text-[11px] sm:tracking-[0.24em]">
+          <div className="flex w-full items-center justify-center gap-5 text-[10px] uppercase tracking-[0.2em] sm:gap-6 sm:text-[11px] sm:tracking-[0.24em] md:w-auto md:justify-end">
             <Link
               href="/boutique"
-              className="text-gold transition-colors hover:text-brown"
+              className="border-b border-transparent text-gold transition-colors hover:border-gold/60 hover:text-brown"
             >
               Boutique privée
             </Link>
             <CartButton />
           </div>
         </div>
-        <nav className="mt-4 flex items-center gap-6 overflow-x-auto border-t border-border/60 pt-3 text-[10px] uppercase tracking-[0.22em] whitespace-nowrap text-brown-soft md:hidden">
+        <nav className="mt-4 grid grid-cols-3 items-center border-t border-border/60 pt-3 text-center text-[10px] uppercase tracking-[0.22em] text-brown-soft md:hidden">
           {nav.map((item) => (
-            <Link key={item.href} href={item.href} className="hover:text-brown">
+            <Link key={item.href} href={item.href} className="py-1 hover:text-brown">
               {item.label}
             </Link>
           ))}

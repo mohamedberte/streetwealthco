@@ -65,7 +65,7 @@ export default function Home() {
           className="sw-aura sw-motion-layer absolute inset-0"
           style={{
             background:
-              "linear-gradient(130deg, #cfb58c 0%, #dbc6a8 32%, #ebdcc5 68%, #f4ecdf 100%)",
+              "linear-gradient(130deg, #cdbb9f 0%, #ddd0bb 32%, #d8ded3 68%, #edf0ea 100%)",
           }}
         />
         <div
@@ -81,7 +81,7 @@ export default function Home() {
           className="sw-motion-layer absolute -left-28 top-20 h-72 w-72 rounded-full opacity-20"
           style={{
             background:
-              "radial-gradient(circle at 50% 50%, rgba(169,132,79,0.42) 0%, rgba(169,132,79,0.08) 55%, transparent 70%)",
+              "radial-gradient(circle at 50% 50%, rgba(53,90,71,0.38) 0%, rgba(53,90,71,0.08) 55%, transparent 70%)",
           }}
         />
         <div

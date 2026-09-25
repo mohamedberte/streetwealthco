@@ -5,7 +5,8 @@
   --sw-ivory: #f3ebdd;
   --sw-brown: #24150f;
   --sw-brown-soft: #5c493d;
-  --sw-gold: #a9844f;
+  --sw-gold-classic: #a9844f;
+  --sw-gold: #355a47;
   --sw-border: #cdbb9f;
   --sw-muted: #75685d;
   --sw-white: #faf8f3;
@@ -36,7 +37,7 @@ body {
 .sw-body {
   background-color: var(--sw-cream);
   background-image:
-    radial-gradient(70% 42% at 10% -5%, rgb(169 132 79 / 18%), transparent 70%),
+    radial-gradient(70% 42% at 10% -5%, rgb(53 90 71 / 17%), transparent 70%),
     radial-gradient(55% 38% at 90% 8%, rgb(36 21 15 / 16%), transparent 72%),
     linear-gradient(180deg, #f4ecdf 0%, #f0e3d0 38%, #ebdcc7 100%);
   background-attachment: fixed;
@@ -54,8 +55,8 @@ body {
   opacity: 0.52;
   background: linear-gradient(
     90deg,
-    rgb(169 132 79 / 20%) 0%,
-    rgb(169 132 79 / 90%) 38%,
+    rgb(53 90 71 / 20%) 0%,
+    rgb(53 90 71 / 88%) 38%,
     rgb(36 21 15 / 75%) 100%
   );
   box-shadow: 0 0 14px rgb(36 21 15 / 22%);
@@ -114,7 +115,7 @@ body {
   background: linear-gradient(
     145deg,
     rgb(36 21 15 / 14%) 0%,
-    rgb(169 132 79 / 18%) 42%,
+    rgb(53 90 71 / 20%) 42%,
     rgb(36 21 15 / 22%) 100%
   );
 }
@@ -139,7 +140,7 @@ body {
   background: radial-gradient(
     circle,
     rgb(250 248 243 / 40%) 0%,
-    rgb(169 132 79 / 25%) 36%,
+    rgb(53 90 71 / 24%) 36%,
     rgb(36 21 15 / 20%) 62%,
     transparent 80%
   );
@@ -173,8 +174,8 @@ body {
   height: 0.64rem;
   width: 0.64rem;
   border-radius: 9999px;
-  background: rgb(169 132 79 / 86%);
-  box-shadow: 0 0 18px rgb(169 132 79 / 36%);
+  background: rgb(53 90 71 / 86%);
+  box-shadow: 0 0 18px rgb(53 90 71 / 36%);
 }
 
 .sw-grain {
@@ -215,7 +216,7 @@ a:focus-visible,
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid rgb(169 132 79 / 60%);
+  outline: 2px solid rgb(53 90 71 / 52%);
   outline-offset: 2px;
 }
 
