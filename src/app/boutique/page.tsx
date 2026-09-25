@@ -8,17 +8,17 @@ export const metadata: Metadata = {
 
 export default function BoutiquePage() {
   return (
-    <div className="mx-auto max-w-[78rem] px-6 py-20">
+    <div className="mx-auto max-w-[78rem] px-4 py-16 sm:px-6 sm:py-20">
       <div data-reveal className="max-w-3xl">
         <p className="text-[11px] uppercase tracking-[0.28em] text-gold">
           Boutique privée
         </p>
-        <h1 className="mt-4 font-serif text-5xl text-brown sm:text-6xl">
+        <h1 className="mt-4 font-serif text-4xl text-brown sm:text-6xl">
           Les pièces du moment.
         </h1>
         <p className="mt-6 max-w-2xl text-lg leading-8 text-brown-soft">
-          Réservation d&apos;atelier. Paiement en ligne à venir: la sélection
-          reste conservée sur cet appareil.
+          Capsules actives du moment. Paiement en ligne à venir: votre
+          sélection reste conservée sur cet appareil.
         </p>
       </div>
 
@@ -34,12 +34,12 @@ export default function BoutiquePage() {
               href={`/boutique/${product.slug}`}
               className="group sw-panel block overflow-hidden transition-colors hover:border-brown"
             >
-              <div className="flex aspect-[4/5] items-end border-b border-border/70 bg-cream/70 px-7 py-7">
+              <div className="flex aspect-[4/5] items-end border-b border-border/70 bg-cream/70 px-6 py-6 sm:px-7 sm:py-7">
                 <p className="font-serif text-5xl text-gold/50 transition-colors group-hover:text-gold">
                   ▲
                 </p>
               </div>
-              <div className="space-y-2 p-7">
+              <div className="space-y-2 p-6 sm:p-7">
                 <p className="text-[11px] uppercase tracking-[0.2em] text-muted">
                   {product.silhouette}
                 </p>

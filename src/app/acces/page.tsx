@@ -13,17 +13,17 @@ export default async function AccessPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-[72vh] max-w-2xl flex-col justify-center px-6 py-20">
+    <div className="mx-auto flex min-h-[72vh] max-w-2xl flex-col justify-center px-4 py-16 sm:px-6 sm:py-20">
       <div data-reveal data-drift className="sw-panel p-8 sm:p-10">
         <p className="text-[11px] uppercase tracking-[0.3em] text-gold">
-          Cercle privé
+          Accès boutique
         </p>
         <h1 className="mt-4 font-serif text-4xl text-brown sm:text-5xl">
           La boutique s&apos;ouvre sur code.
         </h1>
         <p className="mb-10 mt-4 max-w-xl leading-7 text-muted">
-          Un accès est remis aux proches de la maison. Sans lui, les pièces
-          restent en réserve.
+          Le code permet d&apos;accéder aux capsules limitées du moment. Sans
+          lui, les pièces restent visibles uniquement en aperçu public.
         </p>
         <AccessForm />
       </div>

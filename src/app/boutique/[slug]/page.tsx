@@ -27,8 +27,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
   if (!product) notFound();
 
   return (
-    <div className="mx-auto grid max-w-[78rem] gap-12 px-6 py-20 lg:grid-cols-[1fr_1fr]">
-      <div data-reveal data-drift className="sw-panel flex min-h-[470px] items-end px-10 py-10">
+    <div className="mx-auto grid max-w-[78rem] gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1fr_1fr]">
+      <div data-reveal data-drift className="sw-panel flex min-h-[360px] items-end px-8 py-8 sm:min-h-[470px] sm:px-10 sm:py-10">
         <p className="font-serif text-7xl text-gold/40">▲</p>
       </div>
 
@@ -47,7 +47,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <p className="mt-8 text-[11px] uppercase tracking-[0.2em] text-gold">
           {product.edition}
         </p>
-        <h1 className="mt-3 font-serif text-5xl text-brown">{product.name}</h1>
+        <h1 className="mt-3 font-serif text-4xl text-brown sm:text-5xl">{product.name}</h1>
         <p className="mt-4 text-lg text-brown-soft">{formatPrice(product.price)}</p>
         <p className="mt-8 leading-8 text-brown-soft">{product.description}</p>
         <ul className="mt-8 space-y-2 text-sm leading-7 text-muted">

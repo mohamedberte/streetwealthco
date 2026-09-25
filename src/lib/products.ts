@@ -23,7 +23,7 @@ export const products: Product[] = [
       "Broderie StreetWealth Co. ton sur ton brun",
     ],
     fabric: "Molleton coton 480 g/m²",
-    edition: "Édition atelier — 80 pièces",
+    edition: "Capsule limitée — 80 pièces",
   },
   {
     slug: "hoodie-oversized-creme",
@@ -38,7 +38,7 @@ export const products: Product[] = [
       "Ourlet et poignets côtes 2x2",
     ],
     fabric: "Molleton coton 520 g/m²",
-    edition: "Édition atelier — 60 pièces",
+    edition: "Capsule limitée — 60 pièces",
   },
   {
     slug: "tee-essentiel-brun",
@@ -61,14 +61,14 @@ export const products: Product[] = [
     silhouette: "Crewneck",
     price: 145,
     description:
-      "La sobriété d'un col rond, la densité d'un molleton d'atelier. Ni logo ostentatoire, ni concession.",
+      "La sobriété d'un col rond, la densité d'un molleton premium. Ni logo ostentatoire, ni concession.",
     details: [
       "Coupe régulière légèrement allongée",
       "Épaules renforcées",
       "Finition intérieure grattée",
     ],
     fabric: "Molleton coton 460 g/m²",
-    edition: "Édition atelier — 70 pièces",
+    edition: "Capsule limitée — 70 pièces",
   },
   {
     slug: "pantalon-relaxed",
@@ -83,7 +83,7 @@ export const products: Product[] = [
       "Poches plaquées discrètes",
     ],
     fabric: "Coton sergé 320 g/m²",
-    edition: "Édition atelier — 50 pièces",
+    edition: "Capsule limitée — 50 pièces",
   },
   {
     slug: "casquette-signature",

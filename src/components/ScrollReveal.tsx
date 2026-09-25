@@ -42,15 +42,22 @@ export function ScrollReveal() {
         scrollTriggerModule.ScrollTrigger ?? scrollTriggerModule.default;
 
       gsap.registerPlugin(ScrollTrigger);
-      document.documentElement.classList.add("sw-motion-active");
+
+      const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+      const isCoarse = window.matchMedia("(pointer: coarse)").matches;
+      const enableHeavyScrollFx = isDesktop && !isCoarse;
+
+      if (enableHeavyScrollFx) {
+        document.documentElement.classList.add("sw-motion-active");
+      }
 
       const lenis = new Lenis({
         autoRaf: false,
-        duration: 1.2,
+        duration: enableHeavyScrollFx ? 1.2 : 1,
         smoothWheel: true,
-        wheelMultiplier: 0.92,
-        touchMultiplier: 1.03,
-        lerp: 0.09,
+        wheelMultiplier: enableHeavyScrollFx ? 0.92 : 1,
+        touchMultiplier: enableHeavyScrollFx ? 1.03 : 1,
+        lerp: enableHeavyScrollFx ? 0.09 : 0.14,
       });
 
       const onScroll = () => ScrollTrigger.update();
@@ -64,8 +71,6 @@ export function ScrollReveal() {
       animationFrameId = window.requestAnimationFrame(raf);
 
       const context = gsap.context(() => {
-        const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
-
         const revealElements = Array.from(
           document.querySelectorAll<HTMLElement>(REVEAL_SELECTOR),
         );
@@ -79,15 +84,15 @@ export function ScrollReveal() {
           gsap.fromTo(
             element,
             {
-              y: 58,
+              y: enableHeavyScrollFx ? 58 : 30,
               autoAlpha: 0,
-              filter: "blur(8px)",
+              filter: enableHeavyScrollFx ? "blur(8px)" : "blur(3px)",
             },
             {
               y: 0,
               autoAlpha: 1,
               filter: "blur(0px)",
-              duration: 1.2,
+              duration: enableHeavyScrollFx ? 1.2 : 0.8,
               delay,
               ease: "power3.out",
               clearProps: "filter,willChange",
@@ -105,6 +110,28 @@ export function ScrollReveal() {
         );
 
         driftElements.forEach((element) => {
+          if (!enableHeavyScrollFx) {
+            gsap.fromTo(
+              element,
+              {
+                y: 16,
+                autoAlpha: 0.85,
+              },
+              {
+                y: 0,
+                autoAlpha: 1,
+                duration: 0.65,
+                ease: "power2.out",
+                scrollTrigger: {
+                  trigger: element,
+                  start: "top 90%",
+                  once: true,
+                },
+              },
+            );
+            return;
+          }
+
           gsap.fromTo(
             element,
             {
@@ -125,7 +152,7 @@ export function ScrollReveal() {
           );
         });
 
-        if (isDesktop) {
+        if (enableHeavyScrollFx) {
           const scenes = Array.from(
             document.querySelectorAll<HTMLElement>(SCENE_SELECTOR),
           );
@@ -260,7 +287,19 @@ export function ScrollReveal() {
           document.querySelectorAll<HTMLElement>(PARALLAX_SELECTOR),
         );
 
+        if (!enableHeavyScrollFx) {
+          parallaxElements.forEach((element) => {
+            gsap.set(element, {
+              clearProps: "transform",
+            });
+          });
+        }
+
         parallaxElements.forEach((element) => {
+          if (!enableHeavyScrollFx) {
+            return;
+          }
+
           const amount = Number.parseFloat(element.dataset.parallax ?? "10");
           if (Number.isNaN(amount)) {
             return;
@@ -343,6 +382,10 @@ export function ScrollReveal() {
         );
 
         runwayTracks.forEach((track) => {
+          if (!enableHeavyScrollFx) {
+            return;
+          }
+
           gsap.to(track, {
             xPercent: -18,
             ease: "none",

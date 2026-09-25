@@ -8,7 +8,7 @@ export function ContactForm() {
   if (sent) {
     return (
       <p className="font-serif text-2xl leading-relaxed text-brown">
-        Merci. L&apos;atelier vous répondra avec la retenue qui convient.
+        Merci. L&apos;équipe StreetWealth vous répondra avec attention.
       </p>
     );
   }

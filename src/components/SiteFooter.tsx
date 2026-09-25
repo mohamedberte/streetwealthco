@@ -5,7 +5,7 @@ import { Logo } from "@/components/Logo";
 export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-border/80 bg-ivory/85">
-      <div className="mx-auto max-w-[78rem] px-6 py-16">
+      <div className="mx-auto max-w-[78rem] px-4 py-14 sm:px-6 sm:py-16">
         <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr_0.9fr]">
           <div className="space-y-5">
             <p className="text-[11px] uppercase tracking-[0.26em] text-muted">
@@ -16,7 +16,7 @@ export function SiteFooter() {
               {brand.tagline}
             </p>
             <p className="text-[11px] uppercase tracking-[0.2em] text-muted">
-              Maison privée · {brand.city}
+              Street Chic · {brand.city}
             </p>
           </div>
 
@@ -47,12 +47,13 @@ export function SiteFooter() {
           </div>
 
           <div className="text-[11px] uppercase tracking-[0.2em] text-muted">
-            <p className="mb-5 text-brown">Atelier</p>
+            <p className="mb-5 text-brown">Vision</p>
             <p>{brand.city}</p>
             <p className="mt-3 normal-case tracking-normal">{brand.email}</p>
             <p className="mt-6 max-w-sm normal-case tracking-normal leading-relaxed">
-              Accès boutique par code privé. Les pièces sont éditées en
-              quantités mesurées et renouvelées à un rythme volontairement rare.
+              StreetWealth Co. rapproche l&apos;énergie de la rue et l&apos;élégance
+              des pièces premium. L&apos;objectif: transcender les frontières
+              sociales avec un style urbain raffiné.
             </p>
           </div>
         </div>
