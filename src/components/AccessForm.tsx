@@ -19,16 +19,16 @@ export function AccessForm() {
           type="password"
           autoComplete="off"
           required
-          className="w-full border-0 border-b border-border bg-transparent py-3 font-serif text-2xl text-brown outline-none transition-colors focus:border-gold"
+          className="w-full border-0 border-b border-border bg-transparent py-3 font-serif text-3xl text-brown outline-none transition-colors focus:border-gold"
         />
       </label>
       {state.error ? (
-        <p className="text-sm text-brown-soft">{state.error}</p>
+        <p className="text-sm leading-6 text-brown-soft">{state.error}</p>
       ) : null}
       <button
         type="submit"
         disabled={pending}
-        className="w-full bg-brown px-6 py-4 text-[11px] uppercase tracking-[0.28em] text-ivory transition-colors hover:bg-brown-soft disabled:opacity-60"
+        className="w-full bg-brown px-6 py-4 text-[11px] uppercase tracking-[0.3em] text-ivory transition-colors hover:bg-brown-soft disabled:opacity-60"
       >
         {pending ? "Vérification…" : "Entrer"}
       </button>

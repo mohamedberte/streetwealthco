@@ -8,38 +8,53 @@ export const metadata: Metadata = {
 
 export default function CollectionsPage() {
   return (
-    <div className="mx-auto max-w-6xl px-6 py-20">
-      <p className="text-[11px] uppercase tracking-[0.28em] text-gold">
-        Collections
-      </p>
-      <h1 className="mt-4 max-w-2xl font-serif text-5xl leading-tight text-brown">
-        Silhouettes d&apos;atelier, éditions mesurées.
-      </h1>
-      <p className="mt-6 max-w-xl text-lg leading-8 text-brown-soft">
-        Aperçu public. Les disponibilités, tailles et réservations se
-        trouvent dans la boutique privée.
-      </p>
-      <ul className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-        {products.map((product) => (
-          <li key={product.slug} className="border border-border bg-ivory p-8">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-muted">
-              {product.silhouette}
-            </p>
-            <h2 className="mt-4 font-serif text-2xl text-brown">
-              {product.name}
-            </h2>
-            <p className="mt-3 text-sm leading-6 text-brown-soft">
-              {product.edition}
-            </p>
+    <div className="mx-auto max-w-[78rem] px-6 py-20">
+      <div data-reveal className="max-w-3xl">
+        <p className="text-[11px] uppercase tracking-[0.28em] text-gold">
+          Collections
+        </p>
+        <h1 className="mt-4 font-serif text-5xl leading-tight text-brown sm:text-6xl">
+          Silhouettes d&apos;atelier, éditions mesurées.
+        </h1>
+        <p className="mt-6 max-w-2xl text-lg leading-8 text-brown-soft">
+          Aperçu public. Disponibilités, tailles et réservations se trouvent
+          derrière l&apos;accès privé.
+        </p>
+      </div>
+
+      <ul className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        {products.map((product, index) => (
+          <li
+            key={product.slug}
+            data-reveal
+            data-reveal-delay={((index % 3) * 0.09).toFixed(2)}
+            data-drift
+            className="sw-panel overflow-hidden"
+          >
+            <div className="flex aspect-[4/3] items-end border-b border-border/70 bg-cream/70 px-7 py-6">
+              <p className="font-serif text-4xl text-gold/50">▲</p>
+            </div>
+            <div className="p-7">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-muted">
+                {product.silhouette}
+              </p>
+              <h2 className="mt-4 font-serif text-2xl text-brown">
+                {product.name}
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-brown-soft">
+                {product.edition}
+              </p>
+            </div>
           </li>
         ))}
       </ul>
-      <p className="mt-16 text-center">
+
+      <p data-reveal className="mt-16 text-center">
         <Link
           href="/boutique"
           className="text-[11px] uppercase tracking-[0.28em] text-gold hover:text-brown"
         >
-          Entrer dans la boutique
+          Entrer dans la boutique privée
         </Link>
       </p>
     </div>

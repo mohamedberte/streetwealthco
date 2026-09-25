@@ -8,30 +8,38 @@ export const metadata: Metadata = {
 
 export default function BoutiquePage() {
   return (
-    <div className="mx-auto max-w-6xl px-6 py-20">
-      <p className="text-[11px] uppercase tracking-[0.28em] text-gold">
-        Boutique privée
-      </p>
-      <h1 className="mt-4 font-serif text-5xl text-brown">
-        Les pièces du moment.
-      </h1>
-      <p className="mt-6 max-w-xl text-lg leading-8 text-brown-soft">
-        Réservation d&apos;atelier. Paiement en ligne à venir — la sélection
-        se conserve sur cet appareil.
-      </p>
-      <ul className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-        {products.map((product) => (
-          <li key={product.slug}>
+    <div className="mx-auto max-w-[78rem] px-6 py-20">
+      <div data-reveal className="max-w-3xl">
+        <p className="text-[11px] uppercase tracking-[0.28em] text-gold">
+          Boutique privée
+        </p>
+        <h1 className="mt-4 font-serif text-5xl text-brown sm:text-6xl">
+          Les pièces du moment.
+        </h1>
+        <p className="mt-6 max-w-2xl text-lg leading-8 text-brown-soft">
+          Réservation d&apos;atelier. Paiement en ligne à venir: la sélection
+          reste conservée sur cet appareil.
+        </p>
+      </div>
+
+      <ul className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        {products.map((product, index) => (
+          <li
+            key={product.slug}
+            data-reveal
+            data-reveal-delay={((index % 3) * 0.09).toFixed(2)}
+            data-drift
+          >
             <Link
               href={`/boutique/${product.slug}`}
-              className="group block border border-border bg-ivory transition-colors hover:border-brown"
+              className="group sw-panel block overflow-hidden transition-colors hover:border-brown"
             >
-              <div className="flex aspect-[4/5] items-end bg-cream px-6 py-6">
-                <p className="font-serif text-4xl text-gold/50 transition-colors group-hover:text-gold">
+              <div className="flex aspect-[4/5] items-end border-b border-border/70 bg-cream/70 px-7 py-7">
+                <p className="font-serif text-5xl text-gold/50 transition-colors group-hover:text-gold">
                   ▲
                 </p>
               </div>
-              <div className="space-y-2 px-6 py-6">
+              <div className="space-y-2 p-7">
                 <p className="text-[11px] uppercase tracking-[0.2em] text-muted">
                   {product.silhouette}
                 </p>

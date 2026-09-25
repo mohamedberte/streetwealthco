@@ -28,7 +28,7 @@ export function ContactForm() {
         <input
           name="name"
           required
-          className="w-full border-0 border-b border-border bg-transparent py-3 text-brown outline-none focus:border-gold"
+          className="w-full border-0 border-b border-border bg-transparent py-3 text-brown outline-none transition-colors focus:border-gold"
         />
       </label>
       <label className="block">
@@ -39,7 +39,7 @@ export function ContactForm() {
           name="email"
           type="email"
           required
-          className="w-full border-0 border-b border-border bg-transparent py-3 text-brown outline-none focus:border-gold"
+          className="w-full border-0 border-b border-border bg-transparent py-3 text-brown outline-none transition-colors focus:border-gold"
         />
       </label>
       <label className="block">
@@ -50,12 +50,12 @@ export function ContactForm() {
           name="message"
           required
           rows={5}
-          className="w-full resize-none border-0 border-b border-border bg-transparent py-3 text-brown outline-none focus:border-gold"
+          className="w-full resize-none border-0 border-b border-border bg-transparent py-3 text-brown outline-none transition-colors focus:border-gold"
         />
       </label>
       <button
         type="submit"
-        className="bg-brown px-8 py-4 text-[11px] uppercase tracking-[0.28em] text-ivory hover:bg-brown-soft"
+        className="w-full bg-brown px-8 py-4 text-[11px] uppercase tracking-[0.3em] text-ivory hover:bg-brown-soft sm:w-auto"
       >
         Envoyer
       </button>

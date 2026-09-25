@@ -27,11 +27,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
   if (!product) notFound();
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-12 px-6 py-20 lg:grid-cols-2">
-      <div className="flex min-h-[420px] items-end border border-border bg-ivory px-8 py-8">
-        <p className="font-serif text-6xl text-gold/40">▲</p>
+    <div className="mx-auto grid max-w-[78rem] gap-12 px-6 py-20 lg:grid-cols-[1fr_1fr]">
+      <div data-reveal data-drift className="sw-panel flex min-h-[470px] items-end px-10 py-10">
+        <p className="font-serif text-7xl text-gold/40">▲</p>
       </div>
-      <div>
+
+      <div
+        data-reveal
+        data-reveal-delay="0.12"
+        data-drift
+        className="sw-panel p-8 sm:p-10"
+      >
         <Link
           href="/boutique"
           className="text-[11px] uppercase tracking-[0.24em] text-muted hover:text-brown"
@@ -44,7 +50,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <h1 className="mt-3 font-serif text-5xl text-brown">{product.name}</h1>
         <p className="mt-4 text-lg text-brown-soft">{formatPrice(product.price)}</p>
         <p className="mt-8 leading-8 text-brown-soft">{product.description}</p>
-        <ul className="mt-8 space-y-2 text-sm text-muted">
+        <ul className="mt-8 space-y-2 text-sm leading-7 text-muted">
           {product.details.map((detail) => (
             <li key={detail}>— {detail}</li>
           ))}

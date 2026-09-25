@@ -8,15 +8,15 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <div className="mx-auto grid max-w-5xl gap-16 px-6 py-20 md:grid-cols-2">
-      <div>
+    <div className="mx-auto grid max-w-[78rem] gap-12 px-6 py-20 lg:grid-cols-[1.02fr_0.98fr]">
+      <div data-reveal data-drift className="sw-panel p-8 sm:p-10">
         <p className="text-[11px] uppercase tracking-[0.28em] text-gold">
           Contact
         </p>
-        <h1 className="mt-4 font-serif text-5xl leading-tight text-brown">
+        <h1 className="mt-4 font-serif text-5xl leading-tight text-brown sm:text-6xl">
           Écrire à l&apos;atelier.
         </h1>
-        <p className="mt-6 max-w-sm text-lg leading-8 text-brown-soft">
+        <p className="mt-6 max-w-md text-lg leading-8 text-brown-soft">
           Invitations, presse, collaborations. Un mot suffit. Nous lisons
           tout, nous répondons peu, et toujours avec soin.
         </p>
@@ -24,7 +24,15 @@ export default function ContactPage() {
           {brand.email}
         </p>
       </div>
-      <ContactForm />
+
+      <div
+        data-reveal
+        data-reveal-delay="0.12"
+        data-drift
+        className="sw-panel p-8 sm:p-10"
+      >
+        <ContactForm />
+      </div>
     </div>
   );
 }

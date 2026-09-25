@@ -33,13 +33,266 @@ body {
   color: var(--sw-brown);
 }
 
+.sw-body {
+  background-color: var(--sw-cream);
+  background-image:
+    radial-gradient(70% 42% at 10% -5%, rgb(169 132 79 / 18%), transparent 70%),
+    radial-gradient(55% 38% at 90% 8%, rgb(36 21 15 / 16%), transparent 72%),
+    linear-gradient(180deg, #f4ecdf 0%, #f0e3d0 38%, #ebdcc7 100%);
+  background-attachment: fixed;
+}
+
+.sw-scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 70;
+  height: 2px;
+  width: 100%;
+  transform-origin: 0 50%;
+  transform: scaleX(1);
+  opacity: 0.52;
+  background: linear-gradient(
+    90deg,
+    rgb(169 132 79 / 20%) 0%,
+    rgb(169 132 79 / 90%) 38%,
+    rgb(36 21 15 / 75%) 100%
+  );
+  box-shadow: 0 0 14px rgb(36 21 15 / 22%);
+}
+
+.sw-panel {
+  border: 1px solid rgb(205 187 159 / 76%);
+  background:
+    linear-gradient(145deg, rgb(250 248 243 / 80%) 0%, rgb(243 235 221 / 62%) 100%);
+  box-shadow:
+    0 24px 45px -30px rgb(36 21 15 / 40%),
+    inset 0 1px 0 rgb(250 248 243 / 95%);
+  will-change: transform;
+}
+
+.sw-motion-layer {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.sw-runway-wrap {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.sw-runway-track {
+  display: inline-flex;
+  gap: 1.4rem;
+  width: max-content;
+  white-space: nowrap;
+  padding-left: 0.75rem;
+}
+
+.sw-runway-token {
+  border: 1px solid rgb(205 187 159 / 70%);
+  background: rgb(250 248 243 / 72%);
+  padding: 0.55rem 1rem;
+  font-size: 10px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--sw-brown-soft);
+}
+
+.sw-scene-stage {
+  position: relative;
+  display: grid;
+  gap: 1.1rem;
+}
+
+.sw-scene-focus {
+  position: relative;
+  min-height: 21rem;
+  overflow: hidden;
+  border: 1px solid rgb(205 187 159 / 72%);
+  background: linear-gradient(
+    145deg,
+    rgb(36 21 15 / 14%) 0%,
+    rgb(169 132 79 / 18%) 42%,
+    rgb(36 21 15 / 22%) 100%
+  );
+}
+
+.sw-scene-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(to right, rgb(250 248 243 / 9%) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(250 248 243 / 9%) 1px, transparent 1px);
+  background-size: 38px 38px;
+}
+
+.sw-scene-aura {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(75vw, 560px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle,
+    rgb(250 248 243 / 40%) 0%,
+    rgb(169 132 79 / 25%) 36%,
+    rgb(36 21 15 / 20%) 62%,
+    transparent 80%
+  );
+  filter: blur(14px);
+}
+
+.sw-scene-mark {
+  position: absolute;
+  left: 1.4rem;
+  bottom: 1.3rem;
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgb(250 248 243 / 78%);
+}
+
+.sw-scene-copy-stack {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.sw-scene-copy {
+  padding: 1.65rem;
+}
+
+.sw-scene-steps {
+  display: none;
+}
+
+.sw-scene-step {
+  height: 0.64rem;
+  width: 0.64rem;
+  border-radius: 9999px;
+  background: rgb(169 132 79 / 86%);
+  box-shadow: 0 0 18px rgb(169 132 79 / 36%);
+}
+
+.sw-grain {
+  position: relative;
+}
+
+.sw-grain::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.1;
+  background-image:
+    repeating-linear-gradient(
+      112deg,
+      transparent 0 84px,
+      rgb(36 21 15 / 22%) 84px 86px
+    );
+}
+
+.sw-aura {
+  animation: sw-aura 18s ease-in-out infinite alternate;
+}
+
 ::selection {
   background: var(--sw-gold);
   color: var(--sw-ivory);
+}
+
+a,
+button {
+  transition-property: color, border-color, background-color, opacity, transform;
+  transition-duration: 240ms;
+  transition-timing-function: ease;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid rgb(169 132 79 / 60%);
+  outline-offset: 2px;
 }
 
 input,
 textarea,
 button {
   font-family: inherit;
+}
+
+@keyframes sw-aura {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.72;
+  }
+  to {
+    transform: translate3d(0, -2.6%, 0) scale(1.04);
+    opacity: 1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .sw-runway-track {
+    gap: 1.9rem;
+  }
+
+  .sw-runway-token {
+    padding: 0.62rem 1.25rem;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+  }
+
+  .sw-motion-active .sw-scene-stage {
+    min-height: 40rem;
+    overflow: hidden;
+    border: 1px solid rgb(205 187 159 / 68%);
+    background: rgb(243 235 221 / 48%);
+  }
+
+  .sw-motion-active .sw-scene-focus {
+    position: absolute;
+    inset: 0;
+    min-height: auto;
+    border: 0;
+  }
+
+  .sw-motion-active .sw-scene-copy-stack {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .sw-motion-active .sw-scene-copy {
+    position: absolute;
+    left: 2.6rem;
+    bottom: 2.4rem;
+    max-width: 34rem;
+    pointer-events: auto;
+  }
+
+  .sw-motion-active .sw-scene-steps {
+    position: absolute;
+    right: 1.9rem;
+    top: 50%;
+    display: flex;
+    transform: translateY(-50%);
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .sw-aura,
+  .sw-scroll-progress {
+    animation: none;
+  }
 }
