@@ -22,6 +22,7 @@
   --color-white: var(--tx-white);
   --font-sans: var(--font-outfit);
   --font-serif: var(--font-cormorant);
+  --font-display: var(--font-bebas);
 }
 
 html,

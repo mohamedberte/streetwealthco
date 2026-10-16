@@ -1,41 +1,22 @@
-# StreetWealth Co.
+# TRIPLEX
 
-Site vitrine et boutique privée de StreetWealth Co.
+L'expression d'un style distinctif qui transcende les frontieres.
 
-**L'expression d'un style distinctif qui transcende les frontières.**
+Site d'une seule page : une exposition immersive en carrousel motion (Next.js App Router, TypeScript, Tailwind CSS, GSAP), avec une boutique complete pour la vente en France et dans l'UE (prix en EUR TTC, paiement par carte via Stripe Checkout, stock par taille en PostgreSQL, droit de retractation de 14 jours).
 
-## Démarrage
+## Demarrage rapide
 
-```bash
+```powershell
 npm install
-cp .env.example .env.local
+copy .env.example .env.local
 npm run dev
 ```
 
-Ouvrir [http://localhost:3000](http://localhost:3000).
+Installation complete, configuration (Neon, Stripe, Resend, Vercel), elements a completer et limites : voir [SETUP.md](SETUP.md).
 
-## Boutique privée
+## Structure
 
-Les routes `/boutique` sont protégées par un code d'accès.
-
-En local, le code par défaut est `STREETWEALTH` (variable `BOUTIQUE_ACCESS_CODE` dans `.env.local`).
-
-En production, définissez un code long et unique. Sans cette variable, l'accès est refusé.
-
-## Pages
-
-| Route | Rôle |
-| --- | --- |
-| `/` | Vitrine |
-| `/maison` | Manifeste |
-| `/collections` | Aperçu public |
-| `/contact` | Atelier |
-| `/acces` | Porte d'entrée |
-| `/boutique` | Catalogue privé |
-| `/boutique/[slug]` | Fiche pièce |
-
-Le panier est local (navigateur). Le paiement n'est pas encore branché.
-
-## Palette
-
-Crème `#E8D8C0`, ivoire `#F3EBDD`, brun `#24150F`, brun doux `#5C493D`, or `#A9844F` (accent uniquement).
+- `src/app` : pages, actions serveur, webhook Stripe (`api/stripe/webhook`), espace `/admin`, suivi `/commande/<jeton>`
+- `src/components` : exposition, panier, paiement
+- `src/lib` : pieces (`products.ts`), livraison (`shipping.ts`), societe (`brand.ts`), textes legaux (`legal.ts`)
+- `src/server` : base de donnees, stock, commandes, paiements, e-mails

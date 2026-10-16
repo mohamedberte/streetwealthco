@@ -8,6 +8,8 @@ import {
   useMemo,
   useState,
 } from "react";
+import { getProduct } from "@/lib/products";
+import { policy } from "@/lib/shipping";
 
 export type CartItem = {
   slug: string;
@@ -22,6 +24,7 @@ type CartContextValue = {
   open: boolean;
   setOpen: (open: boolean) => void;
   addItem: (item: Omit<CartItem, "quantity">) => void;
+  changeQuantity: (slug: string, size: string, delta: number) => void;
   removeItem: (slug: string, size: string) => void;
   clear: () => void;
   count: number;
@@ -39,7 +42,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) setItems(JSON.parse(raw) as CartItem[]);
+      if (raw) {
+        const stored = JSON.parse(raw) as CartItem[];
+        // Ignore les pièces/tailles qui n'existent plus et recale les prix.
+        setItems(
+          stored.flatMap((item) => {
+            const product = getProduct(item.slug);
+            if (!product || !product.sizes.includes(item.size)) return [];
+            return [
+              {
+                ...item,
+                name: product.name,
+                price: product.price,
+                quantity: Math.min(Math.max(1, item.quantity), policy.maxQuantity),
+              },
+            ];
+          }),
+        );
+      }
     } catch {
       setItems([]);
     }
@@ -58,10 +78,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       );
       if (index === -1) return [...current, { ...item, quantity: 1 }];
       return current.map((entry, i) =>
-        i === index ? { ...entry, quantity: entry.quantity + 1 } : entry,
+        i === index
+          ? { ...entry, quantity: Math.min(entry.quantity + 1, policy.maxQuantity) }
+          : entry,
       );
     });
     setOpen(true);
+  }, []);
+
+  const changeQuantity = useCallback((slug: string, size: string, delta: number) => {
+    setItems((current) =>
+      current.map((entry) =>
+        entry.slug === slug && entry.size === size
+          ? {
+              ...entry,
+              quantity: Math.min(Math.max(1, entry.quantity + delta), policy.maxQuantity),
+            }
+          : entry,
+      ),
+    );
   }, []);
 
   const removeItem = useCallback((slug: string, size: string) => {
@@ -75,8 +110,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(() => {
     const count = items.reduce((sum, item) => sum + item.quantity, 0);
     const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    return { items, open, setOpen, addItem, removeItem, clear, count, total };
-  }, [items, open, addItem, removeItem, clear]);
+    return { items, open, setOpen, addItem, changeQuantity, removeItem, clear, count, total };
+  }, [items, open, addItem, changeQuantity, removeItem, clear]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Outfit } from "next/font/google";
+import { Bebas_Neue, Cormorant_Garamond, Outfit } from "next/font/google";
 import { CartDrawer } from "@/components/CartDrawer";
 import { CartProvider } from "@/components/CartProvider";
 import { brand } from "@/lib/brand";
@@ -17,9 +17,27 @@ const serif = Cormorant_Garamond({
   weight: ["400", "500", "600"],
 });
 
+/** Police réservée au logotype. */
+const display = Bebas_Neue({
+  variable: "--font-bebas",
+  subsets: ["latin"],
+  weight: "400",
+});
+
 export const metadata: Metadata = {
-  title: `${brand.name} — Exposition`,
+  metadataBase: new URL(process.env.SITE_URL ?? "http://localhost:3000"),
+  title: {
+    default: `${brand.name} — Exposition`,
+    template: `%s — ${brand.name}`,
+  },
   description: brand.tagline,
+  openGraph: {
+    title: brand.name,
+    description: brand.tagline,
+    siteName: brand.name,
+    locale: "fr_FR",
+    type: "website",
+  },
 };
 
 export const viewport: Viewport = {
@@ -30,7 +48,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="fr"
-      className={`${sans.variable} ${serif.variable} h-full antialiased`}
+      className={`${sans.variable} ${serif.variable} ${display.variable} h-full antialiased`}
     >
       <body className="h-full font-sans">
         <CartProvider>

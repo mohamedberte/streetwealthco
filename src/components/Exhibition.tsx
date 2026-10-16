@@ -6,9 +6,13 @@ import gsap from "gsap";
 import { CartButton } from "@/components/CartDrawer";
 import { useCart } from "@/components/CartProvider";
 import { Garment } from "@/components/Garment";
+import { InfoPanel } from "@/components/InfoPanel";
+import { Logo } from "@/components/Logo";
 import { Reserve } from "@/components/Reserve";
 import { brand } from "@/lib/brand";
-import { formatPrice, products } from "@/lib/products";
+import { editionTotal, formatPrice, isLimited, products } from "@/lib/products";
+
+export type Availability = Record<string, Record<string, number>>;
 
 const COUNT = products.length;
 const LOCK_MS = 1250;
@@ -19,18 +23,59 @@ const pad = (n: number) => String(n + 1).padStart(2, "0");
 const wordSize = (word: string) =>
   `min(${Math.min(22, 148 / word.length).toFixed(1)}vw, 36svh)`;
 
-export function Exhibition() {
+export function Exhibition({
+  availability,
+  initialSlug,
+}: {
+  availability: Availability;
+  initialSlug?: string;
+}) {
+  const initialIndex = Math.max(
+    0,
+    products.findIndex((product) => product.slug === initialSlug),
+  );
   const { open: cartOpen } = useCart();
   const rootRef = useRef<HTMLElement>(null);
   const slideRefs = useRef<(HTMLElement | null)[]>([]);
-  const indexRef = useRef(0);
+  const indexRef = useRef(initialIndex);
   const lockUntil = useRef(0);
   const cartOpenRef = useRef(false);
-  const [index, setIndex] = useState(0);
+  const infoOpenRef = useRef(false);
+  const [index, setIndex] = useState(initialIndex);
   const [hinted, setHinted] = useState(true);
+  const [avail, setAvail] = useState<Availability>(availability);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   useEffect(() => {
     cartOpenRef.current = cartOpen;
+  }, [cartOpen]);
+
+  useEffect(() => {
+    infoOpenRef.current = infoOpen;
+  }, [infoOpen]);
+
+  /* Disponibilités à jour : au retour sur l'onglet et régulièrement */
+  useEffect(() => {
+    let active = true;
+    const refresh = async () => {
+      try {
+        const response = await fetch("/api/availability", { cache: "no-store" });
+        if (response.ok && active) setAvail((await response.json()) as Availability);
+      } catch {
+        /* hors ligne : on garde les dernières valeurs connues */
+      }
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    void refresh();
+    const timer = window.setInterval(refresh, 60_000);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [cartOpen]);
 
   const go = useCallback((to: number, dir?: 1 | -1) => {
@@ -54,6 +99,7 @@ export function Exhibition() {
     indexRef.current = target;
     setIndex(target);
     setHinted(false);
+    window.history.replaceState(null, "", `/?piece=${products[target].slug}`);
 
     gsap.killTweensOf(q(out, "[data-art]"), "x,rotation");
 
@@ -151,7 +197,7 @@ export function Exhibition() {
 
     /* Entrée + mouvements ambiants */
     const ctx = gsap.context(() => {
-      const first = slides[0];
+      const first = slides[indexRef.current];
       if (first && !reduce) {
         gsap.from(first.querySelectorAll("[data-char]"), {
           yPercent: 115,
@@ -208,7 +254,7 @@ export function Exhibition() {
       const now = performance.now();
       const fresh = now - lastWheel > 180;
       lastWheel = now;
-      if (cartOpenRef.current || now < lockUntil.current) return;
+      if (cartOpenRef.current || infoOpenRef.current || now < lockUntil.current) return;
       const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
       if (Math.abs(delta) < 8) return;
       if (!fresh && Math.abs(delta) < 60) return;
@@ -251,7 +297,7 @@ export function Exhibition() {
 
     /* Clavier */
     const onKey = (event: KeyboardEvent) => {
-      if (cartOpenRef.current) return;
+      if (cartOpenRef.current || infoOpenRef.current) return;
       if (["ArrowRight", "ArrowDown", "PageDown"].includes(event.key)) next();
       else if (["ArrowLeft", "ArrowUp", "PageUp"].includes(event.key)) prev();
       else if (event.key === "Home") go(0);
@@ -278,7 +324,7 @@ export function Exhibition() {
     };
   }, [go, next, prev]);
 
-  const first = products[0].tone;
+  const first = products[initialIndex].tone;
 
   return (
     <main
@@ -290,14 +336,21 @@ export function Exhibition() {
 
       <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between px-6 pt-6 sm:px-10 sm:pt-8">
         <div className="pointer-events-auto">
-          <h1 className="font-serif text-2xl font-medium tracking-[0.42em] sm:text-3xl">
-            TRIPLE<span className="text-gold">X</span>
+          <h1 className="m-0">
+            <Logo className="text-4xl sm:text-5xl" />
           </h1>
           <p className="mt-2 hidden max-w-[17rem] text-[10px] uppercase leading-relaxed tracking-[0.26em] opacity-60 sm:block">
             {brand.tagline}
           </p>
         </div>
-        <div className="pointer-events-auto pt-1 text-[11px]">
+        <div className="pointer-events-auto flex items-center gap-6 pt-2 text-[11px]">
+          <button
+            type="button"
+            onClick={() => setInfoOpen(true)}
+            className="uppercase tracking-[0.24em] opacity-80 transition-opacity hover:opacity-100"
+          >
+            Informations
+          </button>
           <CartButton />
         </div>
       </header>
@@ -311,7 +364,7 @@ export function Exhibition() {
           inert={i !== index}
           aria-roledescription="slide"
           aria-label={`${i + 1} sur ${COUNT} — ${product.name}`}
-          className={`absolute inset-0 ${i === 0 ? "" : "invisible opacity-0"}`}
+          className={`absolute inset-0 ${i === initialIndex ? "" : "invisible opacity-0"}`}
         >
           {/* Scène : mot géant, halo, pièce */}
           <div className="absolute inset-x-0 bottom-60 top-16 sm:bottom-48">
@@ -349,7 +402,7 @@ export function Exhibition() {
                         fill
                         sizes="(max-width: 768px) 90vw, 40vw"
                         className="object-contain"
-                        priority={i === 0}
+                        priority={i === initialIndex}
                       />
                     ) : (
                       <Garment
@@ -380,6 +433,7 @@ export function Exhibition() {
                 {formatPrice(product.price)}
                 <span className="opacity-60"> · Édition {product.edition}</span>
               </p>
+              <Gauge product={product} avail={avail[product.slug]} />
             </div>
 
             <div className="flex flex-col gap-4 sm:items-end">
@@ -401,6 +455,7 @@ export function Exhibition() {
                   name={product.name}
                   price={product.price}
                   sizes={product.sizes}
+                  available={avail[product.slug] ?? {}}
                 />
               </div>
             </div>
@@ -464,6 +519,45 @@ export function Exhibition() {
         </p>
         <span className="w-24 sm:hidden" aria-hidden />
       </nav>
+
+      <InfoPanel open={infoOpen} onClose={() => setInfoOpen(false)} />
     </main>
+  );
+}
+
+/** Jauge de rareté : pièces restantes sur la taille de l'édition. */
+function Gauge({
+  product,
+  avail,
+}: {
+  product: (typeof products)[number];
+  avail?: Record<string, number>;
+}) {
+  if (!avail) return null;
+  const left = Object.values(avail).reduce((sum, n) => sum + n, 0);
+  const total = editionTotal(product);
+  const limited = isLimited(product);
+
+  const text =
+    left === 0
+      ? "Épuisé"
+      : left <= 5
+        ? `Dernières pièces · ${left}`
+        : limited
+          ? `Il reste ${left} pièces sur ${total}`
+          : "Disponible";
+
+  return (
+    <div data-reveal className="mt-3 w-56">
+      {limited && (
+        <div className="h-px w-full bg-current/25">
+          <div
+            className="h-px bg-current transition-[width] duration-700"
+            style={{ width: `${Math.min(100, (left / total) * 100)}%` }}
+          />
+        </div>
+      )}
+      <p className="mt-2 text-[10px] uppercase tracking-[0.26em] opacity-70">{text}</p>
+    </div>
   );
 }

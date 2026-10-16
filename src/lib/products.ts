@@ -30,6 +30,8 @@ export type Product = {
   fabric: string;
   edition: string;
   sizes: string[];
+  /** Stock initial par taille (utilisé uniquement pour initialiser la base). */
+  stockPerSize: number;
   kind: GarmentKind;
   tone: Tone;
   /**
@@ -53,6 +55,7 @@ export const products: Product[] = [
     fabric: "Molleton coton 480 g/m²",
     edition: "80 pièces",
     sizes: STANDARD_SIZES,
+    stockPerSize: 16,
     kind: "hoodie-cropped",
     tone: { bg: "#24150F", ink: "#F3EBDD", fill: "#F3EBDD", line: "#24150F" },
   },
@@ -67,6 +70,7 @@ export const products: Product[] = [
     fabric: "Molleton coton 520 g/m²",
     edition: "60 pièces",
     sizes: STANDARD_SIZES,
+    stockPerSize: 12,
     kind: "hoodie-oversized",
     tone: { bg: "#5C493D", ink: "#F3EBDD", fill: "#E8D8C0", line: "#5C493D" },
   },
@@ -81,6 +85,7 @@ export const products: Product[] = [
     fabric: "Jersey coton 220 g/m²",
     edition: "Permanente",
     sizes: STANDARD_SIZES,
+    stockPerSize: 40,
     kind: "tee",
     tone: { bg: "#E8D8C0", ink: "#24150F", fill: "#5C493D", line: "#24150F" },
   },
@@ -95,6 +100,7 @@ export const products: Product[] = [
     fabric: "Molleton coton 460 g/m²",
     edition: "70 pièces",
     sizes: STANDARD_SIZES,
+    stockPerSize: 14,
     kind: "crewneck",
     tone: { bg: "#CDBB9F", ink: "#24150F", fill: "#F3EBDD", line: "#24150F" },
   },
@@ -109,6 +115,7 @@ export const products: Product[] = [
     fabric: "Coton sergé 320 g/m²",
     edition: "50 pièces",
     sizes: STANDARD_SIZES,
+    stockPerSize: 10,
     kind: "pants",
     tone: { bg: "#F3EBDD", ink: "#24150F", fill: "#24150F", line: "#CDBB9F" },
   },
@@ -123,6 +130,7 @@ export const products: Product[] = [
     fabric: "Coton twill",
     edition: "Permanente",
     sizes: ["Unique"],
+    stockPerSize: 60,
     kind: "cap",
     tone: {
       bg: "#1A0F0A",
@@ -134,6 +142,20 @@ export const products: Product[] = [
   },
 ];
 
+export function getProduct(slug: string) {
+  return products.find((product) => product.slug === slug);
+}
+
+/** Édition limitée = toute pièce dont l'édition n'est pas « Permanente ». */
+export function isLimited(product: Product) {
+  return product.edition !== "Permanente";
+}
+
+export function editionTotal(product: Product) {
+  return product.stockPerSize * product.sizes.length;
+}
+
+/** Montants en euros (TTC). */
 export function formatPrice(amount: number) {
   return new Intl.NumberFormat("fr-FR", {
     style: "currency",
