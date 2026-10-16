@@ -1,7 +1,6 @@
 export const brand = {
-  name: "StreetWealth Co.",
-  shortName: "StreetWealth",
+  name: "TRIPLEX",
   tagline: "L'expression d'un style distinctif qui transcende les frontières.",
   city: "Paris",
-  email: "contact@streetwealthco.com",
+  email: "contact@triplex.com",
 } as const;

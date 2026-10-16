@@ -1,10 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Outfit } from "next/font/google";
 import { CartDrawer } from "@/components/CartDrawer";
 import { CartProvider } from "@/components/CartProvider";
-import { ScrollReveal } from "@/components/ScrollReveal";
-import { SiteFooter } from "@/components/SiteFooter";
-import { SiteHeader } from "@/components/SiteHeader";
 import { brand } from "@/lib/brand";
 import "./globals.css";
 
@@ -21,11 +18,12 @@ const serif = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: {
-    default: `${brand.name} — ${brand.tagline}`,
-    template: `%s — ${brand.name}`,
-  },
+  title: `${brand.name} — Exposition`,
   description: brand.tagline,
+};
+
+export const viewport: Viewport = {
+  themeColor: "#24150F",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -34,13 +32,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="fr"
       className={`${sans.variable} ${serif.variable} h-full antialiased`}
     >
-      <body className="sw-body flex min-h-full flex-col font-sans text-brown">
+      <body className="h-full font-sans">
         <CartProvider>
-          <div aria-hidden className="sw-scroll-progress" />
-          <ScrollReveal />
-          <SiteHeader />
-          <main className="flex-1">{children}</main>
-          <SiteFooter />
+          {children}
           <CartDrawer />
         </CartProvider>
       </body>

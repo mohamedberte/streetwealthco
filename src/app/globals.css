@@ -1,329 +1,72 @@
 @import "tailwindcss";
 
 :root {
-  --sw-cream: #e8ddcd;
-  --sw-ivory: #f4ede2;
-  --sw-brown: #231913;
-  --sw-brown-soft: #5d4e43;
-  --sw-green: #2f6248;
-  --sw-border: #c6b59a;
-  --sw-muted: #7d6f61;
-  --sw-white: #faf6ef;
+  --tx-cream: #e8d8c0;
+  --tx-ivory: #f3ebdd;
+  --tx-brown: #24150f;
+  --tx-brown-soft: #5c493d;
+  --tx-gold: #a9844f;
+  --tx-border: #cdbb9f;
+  --tx-muted: #75685d;
+  --tx-white: #faf8f3;
 }
 
 @theme inline {
-  --color-cream: var(--sw-cream);
-  --color-ivory: var(--sw-ivory);
-  --color-brown: var(--sw-brown);
-  --color-brown-soft: var(--sw-brown-soft);
-  --color-brand: var(--sw-green);
-  --color-border: var(--sw-border);
-  --color-muted: var(--sw-muted);
-  --color-white: var(--sw-white);
+  --color-cream: var(--tx-cream);
+  --color-ivory: var(--tx-ivory);
+  --color-brown: var(--tx-brown);
+  --color-brown-soft: var(--tx-brown-soft);
+  --color-gold: var(--tx-gold);
+  --color-border: var(--tx-border);
+  --color-muted: var(--tx-muted);
+  --color-white: var(--tx-white);
   --font-sans: var(--font-outfit);
   --font-serif: var(--font-cormorant);
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
+html,
 body {
-  background: var(--sw-cream);
-  color: var(--sw-brown);
-}
-
-.sw-body {
-  background-color: var(--sw-cream);
-  background-image:
-    radial-gradient(70% 42% at 8% -4%, rgb(47 98 72 / 15%), transparent 72%),
-    radial-gradient(58% 40% at 93% 10%, rgb(35 25 19 / 12%), transparent 74%),
-    linear-gradient(180deg, #f4ede2 0%, #eee4d6 40%, #e8ddcd 100%);
-  background-attachment: fixed;
-}
-
-.sw-scroll-progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 70;
-  height: 2px;
-  width: 100%;
-  transform-origin: 0 50%;
-  transform: scaleX(1);
-  opacity: 0.52;
-  background: linear-gradient(
-    90deg,
-    rgb(47 98 72 / 18%) 0%,
-    rgb(47 98 72 / 84%) 52%,
-    rgb(35 25 19 / 56%) 100%
-  );
-  box-shadow: 0 0 16px rgb(35 25 19 / 20%);
-}
-
-.sw-panel {
-  border: 1px solid rgb(198 181 154 / 70%);
-  background:
-    linear-gradient(145deg, rgb(250 246 239 / 90%) 0%, rgb(238 229 214 / 70%) 100%);
-  border-radius: 1.15rem;
+  height: 100%;
   overflow: hidden;
-  box-shadow:
-    0 24px 42px -32px rgb(35 25 19 / 38%),
-    inset 0 1px 0 rgb(250 246 239 / 95%);
-  will-change: transform;
+  background: var(--tx-brown);
+  color: var(--tx-ivory);
 }
 
-.sw-cinematic-media {
-  transform: translateZ(0);
-  will-change: transform;
-  filter: saturate(0.96) contrast(1.02);
+/* Mot géant en filigrane : suit la couleur d'encre de la scène */
+.tx-ghost {
+  color: color-mix(in srgb, currentColor 12%, transparent);
 }
 
-.sw-light-sweep {
-  background: linear-gradient(
-    105deg,
-    transparent 0%,
-    transparent 44%,
-    rgb(250 246 239 / 13%) 50%,
-    transparent 57%,
-    transparent 100%
-  );
-  mix-blend-mode: screen;
-  animation: sw-sweep 14s linear infinite;
-}
-
-.sw-motion-layer {
-  will-change: transform;
-  transform: translateZ(0);
-}
-
-.sw-runway-wrap {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-}
-
-.sw-runway-track {
-  display: inline-flex;
-  gap: 1.4rem;
-  width: max-content;
-  white-space: nowrap;
-  padding-left: 0.75rem;
-}
-
-.sw-runway-token {
-  border: 1px solid rgb(47 98 72 / 28%);
-  background: rgb(250 246 239 / 68%);
-  padding: 0.55rem 1rem;
-  font-size: 10px;
-  letter-spacing: 0.26em;
-  text-transform: uppercase;
-  color: rgb(47 98 72 / 95%);
-}
-
-.sw-scene-stage {
-  position: relative;
-  display: grid;
-  gap: 1.1rem;
-}
-
-.sw-scene-focus {
-  position: relative;
-  min-height: 21rem;
-  overflow: hidden;
-  border: 1px solid rgb(198 181 154 / 58%);
-  background: linear-gradient(
-    145deg,
-    rgb(35 25 19 / 14%) 0%,
-    rgb(47 98 72 / 20%) 42%,
-    rgb(35 25 19 / 28%) 100%
-  );
-}
-
-.sw-scene-grid {
-  position: absolute;
-  inset: 0;
-  opacity: 0.35;
-  background-image:
-    linear-gradient(to right, rgb(250 246 239 / 10%) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(250 246 239 / 10%) 1px, transparent 1px);
-  background-size: 38px 38px;
-}
-
-.sw-scene-aura {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: min(75vw, 560px);
-  aspect-ratio: 1;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(
-    circle,
-    rgb(250 246 239 / 36%) 0%,
-    rgb(47 98 72 / 24%) 36%,
-    rgb(35 25 19 / 24%) 62%,
-    transparent 80%
-  );
-  filter: blur(14px);
-}
-
-.sw-scene-mark {
-  position: absolute;
-  left: 1.4rem;
-  bottom: 1.3rem;
-  font-size: 10px;
+/* Boutons filaires : héritent de la couleur d'encre de la scène */
+.tx-btn {
+  border: 1px solid color-mix(in srgb, currentColor 55%, transparent);
+  font-size: 11px;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: rgb(241 247 243 / 78%);
+  padding: 0.85rem 1.6rem;
+  transition:
+    background-color 0.4s ease,
+    border-color 0.4s ease;
 }
 
-.sw-scene-copy-stack {
-  display: grid;
-  gap: 1.1rem;
+.tx-btn:hover,
+.tx-btn:focus-visible {
+  border-color: currentColor;
+  background: color-mix(in srgb, currentColor 12%, transparent);
 }
 
-.sw-scene-copy {
-  padding: 1.65rem;
-}
-
-.sw-scene-steps {
-  display: none;
-}
-
-.sw-scene-step {
-  height: 0.64rem;
-  width: 0.64rem;
-  border-radius: 9999px;
-  background: rgb(47 98 72 / 86%);
-  box-shadow: 0 0 18px rgb(47 98 72 / 38%);
-}
-
-.sw-grain {
-  position: relative;
-}
-
-.sw-grain::before {
-  content: "";
+/* Grain léger sur toute la scène */
+.tx-grain {
   pointer-events: none;
   position: absolute;
   inset: 0;
-  opacity: 0.1;
-  background-image:
-    repeating-linear-gradient(
-      112deg,
-      transparent 0 84px,
-      rgb(35 25 19 / 20%) 84px 86px
-    );
+  z-index: 40;
+  opacity: 0.09;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
 
-.sw-aura {
-  animation: sw-aura 18s ease-in-out infinite alternate;
-}
-
-::selection {
-  background: var(--sw-green);
-  color: var(--sw-ivory);
-}
-
-a,
-button {
-  transition-property: color, border-color, background-color, opacity, transform;
-  transition-duration: 240ms;
-  transition-timing-function: ease;
-}
-
-a:focus-visible,
-button:focus-visible,
-input:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid rgb(47 98 72 / 56%);
-  outline-offset: 2px;
-}
-
-input,
-textarea,
-button {
-  font-family: inherit;
-}
-
-@keyframes sw-aura {
-  from {
-    transform: translate3d(0, 0, 0) scale(1);
-    opacity: 0.72;
-  }
-  to {
-    transform: translate3d(0, -2.6%, 0) scale(1.04);
-    opacity: 1;
-  }
-}
-
-@keyframes sw-sweep {
-  from {
-    transform: translateX(-36%);
-  }
-  to {
-    transform: translateX(38%);
-  }
-}
-
-@media (min-width: 1024px) {
-  .sw-runway-track {
-    gap: 1.9rem;
-  }
-
-  .sw-runway-token {
-    padding: 0.62rem 1.25rem;
-    font-size: 10px;
-    letter-spacing: 0.3em;
-  }
-
-  .sw-motion-active .sw-scene-stage {
-    min-height: 40rem;
-    overflow: hidden;
-    border: 1px solid rgb(198 181 154 / 62%);
-    background: rgb(244 237 226 / 46%);
-  }
-
-  .sw-motion-active .sw-scene-focus {
-    position: absolute;
-    inset: 0;
-    min-height: auto;
-    border: 0;
-  }
-
-  .sw-motion-active .sw-scene-copy-stack {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-  }
-
-  .sw-motion-active .sw-scene-copy {
-    position: absolute;
-    left: 2.6rem;
-    bottom: 2.4rem;
-    max-width: 34rem;
-    pointer-events: auto;
-  }
-
-  .sw-motion-active .sw-scene-steps {
-    position: absolute;
-    right: 1.9rem;
-    top: 50%;
-    display: flex;
-    transform: translateY(-50%);
-    flex-direction: column;
-    gap: 0.8rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  .sw-aura,
-  .sw-scroll-progress,
-  .sw-light-sweep {
-    animation: none;
-  }
+:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 4px;
 }
