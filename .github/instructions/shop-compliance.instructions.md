@@ -11,7 +11,7 @@ applyTo: "src/lib/legal.ts,src/lib/shipping.ts,src/lib/brand.ts,src/server/email
 - CGV, livraison, retours, mentions legales, confidentialite : toute modification de fond est a faire valider par un juriste. Ne jamais presenter ces textes comme un avis juridique.
 
 ## RGPD
-- Donnees minimales : nom, e-mail, telephone, adresse, commande ; e-mail pour la liste d'attente ; e-mail et mot de passe (gere par Supabase Auth) pour un compte client. Suppression du compte disponible dans `/compte`.
+- Donnees minimales : nom, e-mail, telephone, adresse, commande ; e-mail pour la liste d'attente ; e-mail (connexion par code, sans mot de passe, via Supabase Auth) pour un compte client. Suppression du compte disponible dans `/compte`.
 - Chaque e-mail de liste d'attente contient un lien de desinscription signe.
 - La page de confidentialite liste fidelement les destinataires (Stripe, Resend, Vercel, Supabase, AWS, transporteur) et les durees de conservation.
 - Pas de traceur ni d'outil de mesure sans consentement ou sans solution exemptee (si ajoute : mettre a jour la page Confidentialite).

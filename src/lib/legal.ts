@@ -176,7 +176,7 @@ export const legalPages: LegalPage[] = [
       {
         heading: "Données collectées",
         body: [
-          "Nom, e-mail, téléphone, adresse de livraison et contenu de la commande ; adresse e-mail pour les alertes de retour en stock ; adresse e-mail et mot de passe (chiffré) si vous créez un compte client.",
+          "Nom, e-mail, téléphone, adresse de livraison et contenu de la commande ; adresse e-mail pour les alertes de retour en stock ; adresse e-mail si vous créez un compte client (connexion par code envoyé par e-mail, sans mot de passe).",
         ],
       },
       {

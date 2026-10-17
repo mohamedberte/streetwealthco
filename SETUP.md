@@ -70,14 +70,15 @@ where email = 'vous@exemple.com';
 
    Le role se lit dans `app_metadata`, que seul le serveur (ou ce SQL) peut modifier : un client ne peut pas se l'attribuer. Se connecter ensuite sur `/admin` avec e-mail et mot de passe. Activer la 2FA sur ce compte des que possible.
 5. **Authentication > URL Configuration** : `Site URL` = votre domaine final (`SITE_URL`) ; ajouter `http://localhost:3000/**` et le domaine final dans `Redirect URLs`.
-6. **Authentication > Email Templates** (les liens passent par `/auth/confirm`, sans cookie de tiers). Modeles complets en francais, aux couleurs de TRIPLEX, dans `supabase/templates/` : copier le contenu HTML dans le champ "Message body" et l'objet indique en commentaire en tete de fichier.
-   - *Confirm signup* : `confirmation.html` (objet : "Confirmez votre compte TRIPLEX")
-   - *Reset password* : `recovery.html` (objet : "Réinitialisation de votre mot de passe TRIPLEX")
-   - Les autres modeles (Magic link, Change email, Invite, Reauthentication) ne sont pas utilises par le site ; laisser les defauts.
-7. **Authentication > Providers > Email** : garder "Confirm email" actif. Pour la production, configurer un SMTP personnalise (Resend convient) : le SMTP integre de Supabase est tres limite en volume.
+6. **Authentication > Email Templates** : la connexion se fait par un code a usage unique recu par e-mail (aucun lien, donc rien a consommer par un scanner de messagerie). Modeles complets en francais, aux couleurs de TRIPLEX, dans `supabase/templates/` : copier le HTML dans "Message body" et l'objet indique en commentaire en tete de fichier.
+   - *Confirm signup* (premier code d'un nouveau client) : `confirmation.html`
+   - *Magic link* (client deja inscrit) : `magic-link.html`
+   - Les autres modeles ne sont pas utilises par le site ; laisser les defauts.
+   - Longueur du code : Authentication > Providers > Email > "Email OTP Length" (6 par defaut ; le site accepte 6 a 10 chiffres). Expiration : 3600 s par defaut.
+7. **Authentication > Providers > Email** : garder "Confirm email" actif. Configurer un SMTP personnalise (Resend convient) AVANT la mise en ligne : chaque connexion envoie un e-mail et le SMTP integre de Supabase est limite a quelques messages par heure.
 8. Sauvegardes : activer les sauvegardes quotidiennes (offre payante) ou exporter regulierement la base.
 
-Comptes clients : facultatifs, page `/compte` (inscription avec confirmation par e-mail, connexion, mot de passe oublie, historique des commandes, suppression du compte). La commande invite reste possible. Les commandes passees avec l'adresse e-mail confirmee d'un compte apparaissent dans son historique.
+Comptes clients : facultatifs, sans mot de passe. Page `/compte` : un champ e-mail, un code recu par message, et le compte existe (creation au premier code valide). Le paiement pre-remplit les coordonnees d'un client connecte, et la page de suivi de commande propose d'activer le compte en un geste. Historique des commandes et suppression du compte dans `/compte`. La commande invite reste possible. Les commandes passees avec l'adresse e-mail confirmee d'un compte apparaissent dans son historique.
 
 ## 5. Stripe
 
@@ -187,7 +188,7 @@ Mesures en place :
 - Stock : reservation atomique en transaction SQL (fonction `create_order`, verrous), sans survente.
 - Base : acces serveur uniquement (`service_role`), RLS actif sur toutes les tables, fonctions transactionnelles non executables par `anon`/`authenticated`, entrees validees avec zod, sorties HTML echappees (e-mails).
 - Admin `/admin` : Supabase Auth (e-mail + mot de passe), role `admin` dans `app_metadata` verifie aupres de Supabase a chaque requete (`getUser`), limitation a 5 echecs par 15 min et par visiteur, pages non indexees et jamais mises en cache. Toutes les actions admin reverifient le role cote serveur.
-- Comptes clients : confirmation d'e-mail obligatoire, mots de passe geres par Supabase (jamais stockes par le site), reponses identiques que l'adresse existe ou non, limitation de debit, suppression du compte avec mot de passe redemande.
+- Comptes clients : connexion par code a usage unique envoye par e-mail (pas de mot de passe a voler), reponses identiques que l'adresse existe ou non, limitation de debit par visiteur et par adresse, suppression du compte avec saisie de confirmation.
 - Anti-abus : limitation de debit sur la creation de commande (le stock est reserve 30 min) et sur la liste d'attente. Adresses IP et e-mails ne sont stockes que sous forme d'empreinte, purgee apres 2 jours.
 - En-tetes HTTP : HSTS, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, CSP (anti-framing, formulaires limites a notre domaine et Stripe).
 - Envois de photos : formats PNG/JPEG/WebP uniquement, type verifie sur le contenu du fichier, 3 Mo maximum, reserves a l'admin connecte (controle de l'origine de la requete en plus du cookie `SameSite=Strict`). Bucket S3 prive (lecture uniquement via CloudFront/OAC), compte IAM limite a `PutObject`/`DeleteObject` sur le prefixe `media/`.

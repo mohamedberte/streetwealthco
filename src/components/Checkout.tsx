@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { placeOrder } from "@/app/actions";
+import { checkoutProfile } from "@/app/compte/actions";
 import { useCart } from "@/components/CartProvider";
 import { formatPrice } from "@/lib/products";
 import { zoneIds, zones, type ZoneId } from "@/lib/shipping";
@@ -16,7 +17,34 @@ export function Checkout({ onBack }: { onBack: () => void }) {
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [account, setAccount] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
+  // Client connecté : coordonnées de sa dernière commande (sans écraser ce qui est déjà saisi).
+  useEffect(() => {
+    let alive = true;
+    checkoutProfile()
+      .then((profile) => {
+        const form = formRef.current;
+        if (!alive || !profile || !form) return;
+        setAccount(true);
+        if (profile.address) setZone(profile.zone);
+        const fill = (name: string, value: string) => {
+          const element = form.elements.namedItem(name);
+          if (element instanceof HTMLInputElement && !element.value) element.value = value;
+        };
+        fill("email", profile.email);
+        fill("name", profile.name);
+        fill("phone", profile.phone);
+        fill("address", profile.address);
+        fill("postalCode", profile.postalCode);
+        fill("city", profile.city);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
   const shipping = zones[zone].fee;
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -53,7 +81,7 @@ export function Checkout({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
+    <form ref={formRef} onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
       <div className="flex-1 space-y-5 overflow-y-auto px-6 py-6">
         <button
           type="button"
@@ -63,6 +91,19 @@ export function Checkout({ onBack }: { onBack: () => void }) {
           ← Retour à la sélection
         </button>
 
+        <p className="text-[11px] leading-relaxed text-ivory/60">
+          {account ? (
+            "Connecté : vos coordonnées sont pré-remplies."
+          ) : (
+            <>
+              Aucun compte n&apos;est nécessaire. Déjà client ?{" "}
+              <a href="/compte?next=/" className="underline hover:text-ivory">
+                Se connecter en un code
+              </a>
+              .
+            </>
+          )}
+        </p>
         <div>
           <label htmlFor="co-name" className={label}>
             Nom complet

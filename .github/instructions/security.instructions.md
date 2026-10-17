@@ -9,7 +9,7 @@ applyTo: "src/server/**,src/app/**/actions.ts,src/app/**/content-actions.ts,src/
 - L'identite se verifie avec `currentUser()` (`auth.getUser()`, validee par Supabase), jamais avec le simple contenu du cookie ni `getSession()`.
 - Toute server action et tout route handler sous `/admin` appelle `requireAdmin()` / `isAdmin()` en premier, avant toute lecture ou ecriture. Une page admin non connectee affiche le formulaire de connexion.
 - Un POST hors server action (route handler) verifie en plus l'en-tete `Origin` (meme hote).
-- Les logins (admin et clients) restent limites (`isLimited`). Les formulaires de compte ne revelent pas si une adresse existe. Redirections (`/auth/confirm`) uniquement vers un chemin interne.
+- Les logins (admin et clients) restent limites (`isLimited`). Les formulaires de compte ne revelent pas si une adresse existe. Connexion client par code a usage unique (`signInWithOtp`/`verifyOtp`), limitee par visiteur et par adresse.
 - Le client Supabase `db()` utilise la cle `service_role` (contourne le RLS) : serveur uniquement, apres verification des droits ; le RLS reste actif sur toutes les tables en defense en profondeur. Les fonctions SQL transactionnelles ne sont executables que par `service_role`.
 
 ## Entrees et base de donnees

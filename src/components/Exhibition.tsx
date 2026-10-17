@@ -357,26 +357,27 @@ export function Exhibition({
     >
       <div aria-hidden className="tx-grain" />
 
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between px-6 pt-6 sm:px-10 sm:pt-8">
-        <div className="pointer-events-auto">
+      <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-4 px-5 pt-6 sm:px-10 sm:pt-8">
+        <div className="pointer-events-auto shrink-0">
           <h1 className="m-0">
-            <Logo className="text-4xl sm:text-5xl" imageUrl={logoUrl} />
+            <Logo className="text-3xl sm:text-5xl" imageUrl={logoUrl} />
           </h1>
           <p className="mt-2 hidden max-w-[17rem] text-[10px] uppercase leading-relaxed tracking-[0.26em] opacity-60 sm:block">
             {tagline}
           </p>
         </div>
-        <div className="pointer-events-auto flex items-center gap-6 pt-2 text-[11px]">
+        <div className="pointer-events-auto flex items-center gap-4 whitespace-nowrap pt-1.5 text-[10px] sm:gap-6 sm:pt-2 sm:text-[11px]">
           <button
             type="button"
             onClick={() => setInfoOpen(true)}
-            className="uppercase tracking-[0.24em] opacity-80 transition-opacity hover:opacity-100"
+            className="uppercase tracking-[0.16em] opacity-80 transition-opacity hover:opacity-100 sm:tracking-[0.24em]"
           >
-            Informations
+            <span className="sm:hidden">Infos</span>
+            <span className="hidden sm:inline">Informations</span>
           </button>
           <Link
             href="/compte"
-            className="uppercase tracking-[0.24em] opacity-80 transition-opacity hover:opacity-100"
+            className="uppercase tracking-[0.16em] opacity-80 transition-opacity hover:opacity-100 sm:tracking-[0.24em]"
           >
             Compte
           </Link>

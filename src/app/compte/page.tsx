@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CodeLogin } from "@/components/CodeLogin";
 import { PageShell } from "@/components/PageShell";
 import { formatPrice } from "@/lib/products";
 import { currentUser, isAdminUser } from "@/server/auth";
 import { supabaseConfigured } from "@/server/db";
 import { listOrdersForUser, type OrderStatus } from "@/server/orders";
-import { deleteAccount, forgotPassword, signIn, signOut, signUp } from "./actions";
+import { deleteAccount, signOut } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Compte", robots: { index: false, follow: false } };
@@ -13,16 +14,10 @@ export const metadata: Metadata = { title: "Compte", robots: { index: false, fol
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 const MESSAGES: Record<string, string> = {
-  inscrit: "Si cette adresse peut être utilisée, un e-mail de confirmation vient de lui être envoyé.",
-  reinit: "Si un compte existe pour cette adresse, un e-mail de réinitialisation vient d'être envoyé.",
-  echec: "Identifiants incorrects, ou adresse e-mail non confirmée.",
-  invalide: "Informations invalides (mot de passe : 10 caractères minimum).",
-  consent: "Veuillez accepter la politique de confidentialité.",
   limite: "Trop de tentatives. Réessayez dans 15 minutes.",
-  lien: "Ce lien n'est plus valide. Demandez-en un nouveau.",
-  mdp: "Votre mot de passe a été mis à jour.",
+  lien: "Ce lien n'est plus valide. Demandez un nouveau code.",
   supprime: "Votre compte a été supprimé.",
-  "suppression-echec": "Suppression impossible : mot de passe incorrect ou erreur technique.",
+  "suppression-echec": "Suppression impossible : saisissez SUPPRIMER pour confirmer, ou réessayez plus tard.",
   admin: "Un compte administrateur ne peut pas être supprimé depuis cette page.",
 };
 
@@ -37,7 +32,7 @@ const STATUS: Record<OrderStatus, string> = {
   refunded: "Remboursée",
 };
 
-const input = "border border-border bg-white px-2.5 py-2 text-sm outline-none focus:border-brown";
+const input = "block w-full border border-border bg-white px-3 py-3 text-base outline-none focus:border-brown";
 const label = "text-[10px] uppercase tracking-[0.22em] text-muted";
 const btn =
   "border border-brown px-4 py-2.5 text-[10px] uppercase tracking-[0.2em] hover:bg-brown hover:text-white";
@@ -47,6 +42,9 @@ export default async function AccountPage({ searchParams }: Props) {
   const params = await searchParams;
   const code = typeof params.m === "string" ? params.m : "";
   const message = MESSAGES[code];
+  // Retour après connexion : chemin interne uniquement.
+  const next =
+    typeof params.next === "string" && /^\/(?!\/)[\w\-./]*$/.test(params.next) ? params.next : "/compte";
   const notice = message && (
     <p role="status" className="mt-6 border border-border bg-white/60 px-4 py-3 text-sm text-brown-soft">
       {message}
@@ -68,68 +66,23 @@ export default async function AccountPage({ searchParams }: Props) {
     return (
       <PageShell>
         <h1 className="font-serif text-4xl">Compte</h1>
-        <p className="mt-4 text-sm text-brown-soft">
-          Un compte est facultatif : vous pouvez toujours commander sans. Il permet de retrouver vos
-          commandes.
+        <p className="mt-4 text-sm leading-relaxed text-brown-soft">
+          Une adresse e-mail, un code reçu par message : c&apos;est tout. Pas de mot de passe, et le
+          compte se crée tout seul la première fois. Vous retrouvez vos commandes passées avec cette
+          adresse.
         </p>
         {notice}
 
-        <section className="mt-10">
-          <h2 className={title}>Se connecter</h2>
-          <form action={signIn} className="mt-4 flex max-w-sm flex-col gap-3">
-            <label className={label} htmlFor="login-email">E-mail</label>
-            <input id="login-email" name="email" type="email" autoComplete="username" required className={input} />
-            <label className={label} htmlFor="login-pw">Mot de passe</label>
-            <input
-              id="login-pw"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              className={input}
-            />
-            <button type="submit" className={btn}>Connexion</button>
-          </form>
-        </section>
-
-        <section className="mt-10">
-          <h2 className={title}>Mot de passe oublié</h2>
-          <form action={forgotPassword} className="mt-4 flex max-w-sm flex-col gap-3">
-            <label className={label} htmlFor="forgot-email">E-mail</label>
-            <input id="forgot-email" name="email" type="email" autoComplete="email" required className={input} />
-            <button type="submit" className={btn}>Recevoir un lien</button>
-          </form>
-        </section>
-
-        <section className="mt-10">
-          <h2 className={title}>Créer un compte</h2>
-          <form action={signUp} className="mt-4 flex max-w-sm flex-col gap-3">
-            <label className={label} htmlFor="signup-email">E-mail</label>
-            <input id="signup-email" name="email" type="email" autoComplete="email" required className={input} />
-            <label className={label} htmlFor="signup-pw">Mot de passe (10 caractères minimum)</label>
-            <input
-              id="signup-pw"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              minLength={10}
-              maxLength={72}
-              required
-              className={input}
-            />
-            <label className="flex items-start gap-2 text-xs text-brown-soft">
-              <input type="checkbox" name="consent" required className="mt-0.5" />
-              <span>
-                J&apos;ai lu la{" "}
-                <Link href="/infos/confidentialite" className="underline">
-                  politique de confidentialité
-                </Link>
-                .
-              </span>
-            </label>
-            <button type="submit" className={btn}>Créer mon compte</button>
-          </form>
-        </section>
+        <div className="mt-8 max-w-md">
+          <CodeLogin next={next} hint="Un compte est facultatif : vous pouvez toujours commander sans." />
+          <p className="mt-2 text-xs text-muted">
+            En continuant, vous reconnaissez avoir lu la{" "}
+            <Link href="/infos/confidentialite" className="underline hover:text-brown">
+              politique de confidentialité
+            </Link>
+            .
+          </p>
+        </div>
       </PageShell>
     );
   }
@@ -172,9 +125,6 @@ export default async function AccountPage({ searchParams }: Props) {
             Administration
           </Link>
         )}
-        <Link href="/compte/mot-de-passe" className={btn}>
-          Changer de mot de passe
-        </Link>
         <form action={signOut}>
           <button type="submit" className={btn}>Déconnexion</button>
         </form>
@@ -188,12 +138,11 @@ export default async function AccountPage({ searchParams }: Props) {
             lien avec votre compte.
           </p>
           <form action={deleteAccount} className="mt-4 flex max-w-sm flex-col gap-3">
-            <label className={label} htmlFor="delete-pw">Mot de passe</label>
+            <label className={label} htmlFor="delete-confirm">Saisissez SUPPRIMER pour confirmer</label>
             <input
-              id="delete-pw"
-              name="password"
-              type="password"
-              autoComplete="current-password"
+              id="delete-confirm"
+              name="confirm"
+              autoComplete="off"
               required
               className={input}
             />

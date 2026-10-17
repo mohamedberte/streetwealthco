@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
+import { PageReveal } from "@/components/PageReveal";
 import { brand } from "@/lib/brand";
 import { getSettings } from "@/server/content";
 
@@ -23,9 +24,9 @@ export async function PageShell({
           ← Exposition
         </Link>
       </header>
-      <main className={`mx-auto px-6 pb-24 pt-8 sm:px-10 ${wide ? "max-w-5xl" : "max-w-2xl"}`}>
+      <PageReveal className={`mx-auto px-6 pb-24 pt-8 sm:px-10 ${wide ? "max-w-5xl" : "max-w-2xl"}`}>
         {children}
-      </main>
+      </PageReveal>
       <footer className="border-t border-border px-6 py-8 text-[11px] uppercase tracking-[0.2em] text-muted sm:px-10">
         {brand.name} · {brand.city}, {brand.country}
       </footer>

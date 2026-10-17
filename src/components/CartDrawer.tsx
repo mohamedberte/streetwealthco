@@ -13,7 +13,7 @@ export function CartButton() {
     <button
       type="button"
       onClick={() => setOpen(true)}
-      className="uppercase tracking-[0.24em] opacity-80 transition-opacity hover:opacity-100"
+      className="uppercase tracking-[0.16em] opacity-80 transition-opacity hover:opacity-100 sm:tracking-[0.24em]"
       aria-label="Ouvrir la sélection"
     >
       Sélection{count > 0 ? ` (${count})` : ""}
