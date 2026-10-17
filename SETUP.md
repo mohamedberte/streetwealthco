@@ -91,7 +91,7 @@ Les photos des pieces et le logo envoyes depuis `/admin` sont stockes dans un bu
 
 Mise en place cote AWS :
 1. **Bucket S3** : region de votre choix, nom sans point, "Block all public access" active, chiffrement par defaut active. Pas d'ACL.
-2. **Distribution CloudFront** : origine = ce bucket (domaine S3 regional), acces via **Origin Access Control (OAC)**, "Redirect HTTP to HTTPS", compression activee. Copier la bucket policy proposee par CloudFront, limitee au prefixe `media/*` :
+2. **Distribution CloudFront** : origine = ce bucket (domaine S3 regional), acces via **Origin Access Control (OAC)**, "Redirect HTTP to HTTPS", compression activee, et la response headers policy geree `SecurityHeadersPolicy` (ajoute `X-Content-Type-Options: nosniff`). Copier la bucket policy proposee par CloudFront, limitee au prefixe `media/*` :
 
 ```json
 {
