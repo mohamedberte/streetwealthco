@@ -22,27 +22,22 @@ export function CartButton() {
 }
 
 export function CartDrawer() {
-  const { items, open, setOpen, removeItem, changeQuantity, clear, total } = useCart();
-  const [step, setStep] = useState<"cart" | "checkout">("cart");
+  const { open } = useCart();
+  return open ? <CartPanel /> : null;
+}
+
+function CartPanel() {
+  const { items, setOpen, removeItem, changeQuantity, clear, total } = useCart();
+  const [checkout, setCheckout] = useState(false);
+  const step = checkout && items.length > 0 ? "checkout" : "cart";
 
   useEffect(() => {
-    if (!open) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, setOpen]);
-
-  useEffect(() => {
-    if (!open) setStep("cart");
-  }, [open]);
-
-  useEffect(() => {
-    if (open && items.length === 0) setStep("cart");
-  }, [open, items.length]);
-
-  if (!open) return null;
+  }, [setOpen]);
 
   return (
     <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Sélection">
@@ -67,7 +62,7 @@ export function CartDrawer() {
         </div>
 
         {step === "checkout" ? (
-          <Checkout onBack={() => setStep("cart")} />
+          <Checkout onBack={() => setCheckout(false)} />
         ) : (
           <>
             <div className="flex-1 overflow-y-auto px-6 py-6">
@@ -149,7 +144,7 @@ export function CartDrawer() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setStep("checkout")}
+                  onClick={() => setCheckout(true)}
                   disabled={items.length === 0}
                   className="tx-btn flex-1 bg-ivory px-4 py-3 text-center text-brown hover:bg-ivory/85 disabled:opacity-40"
                 >

@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 /**
  * Rafraîchit la session Supabase (cookies) avant le rendu des pages qui en dépendent.
@@ -14,7 +14,7 @@ export async function proxy(request: NextRequest) {
   const supabase = createServerClient(url, key, {
     cookies: {
       getAll: () => request.cookies.getAll(),
-      setAll: (list) => {
+      setAll: (list: { name: string; value: string; options: CookieOptions }[]) => {
         for (const { name, value } of list) request.cookies.set(name, value);
         response = NextResponse.next({ request });
         for (const { name, value, options } of list) response.cookies.set(name, value, options);

@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 /** Clé publique (publishable) ; l'ancienne clé « anon » reste acceptée. */
@@ -24,7 +24,7 @@ export async function sessionClient(): Promise<SupabaseClient> {
   return createServerClient(url, key, {
     cookies: {
       getAll: () => store.getAll(),
-      setAll: (list) => {
+      setAll: (list: { name: string; value: string; options: CookieOptions }[]) => {
         try {
           for (const { name, value, options } of list) store.set(name, value, options);
         } catch {

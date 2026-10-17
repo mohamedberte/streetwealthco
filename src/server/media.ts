@@ -3,8 +3,7 @@ import { createHash, createHmac } from "node:crypto";
 
 export const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
 
-const TYPES = ["image/png", "image/jpeg", "image/webp"] as const;
-export type ImageType = (typeof TYPES)[number];
+export type ImageType = "image/png" | "image/jpeg" | "image/webp";
 
 /** Détecte le vrai format à partir des octets (le type annoncé par le client n'est pas fiable). */
 export function sniffImage(data: Uint8Array): ImageType | null {
