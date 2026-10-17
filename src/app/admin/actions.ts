@@ -3,12 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAnyProduct } from "@/server/catalog";
-import {
-  checkPassword,
-  endAdminSession,
-  isAdmin,
-  startAdminSession,
-} from "@/server/admin-auth";
+import { isAdmin } from "@/server/admin-auth";
+import { isAdminUser, sessionClient } from "@/server/auth";
 import { sendRefundEmail, sendShippedEmail } from "@/server/emails";
 import {
   cancelOrder,
@@ -27,22 +23,27 @@ async function requireAdmin() {
 }
 
 export async function login(formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase().slice(0, 200);
   const password = String(formData.get("password") ?? "").slice(0, 200);
   const key = await clientKey();
   // 5 échecs maximum par 15 minutes et par visiteur.
   if (await isLimited("admin-login", key, 5, 15 * 60)) redirect("/admin?error=locked");
-  if (!checkPassword(password)) {
+
+  const supabase = await sessionClient();
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error || !isAdminUser(data.user)) {
+    // Un compte client qui tente l'admin est déconnecté de cette session.
+    if (!error) await supabase.auth.signOut();
     await recordEvent("admin-login", key);
     // Ralentit les essais répétés.
     await new Promise((resolve) => setTimeout(resolve, 800));
     redirect("/admin?error=1");
   }
-  await startAdminSession();
   redirect("/admin");
 }
 
 export async function logout() {
-  await endAdminSession();
+  await (await sessionClient()).auth.signOut();
   redirect("/admin");
 }
 

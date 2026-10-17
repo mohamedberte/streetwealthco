@@ -2,8 +2,8 @@ import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 function secret() {
-  const value = process.env.ADMIN_SESSION_SECRET;
-  if (!value || value.length < 32) throw new Error("ADMIN_SESSION_SECRET manquante ou trop courte.");
+  const value = process.env.APP_SECRET;
+  if (!value || value.length < 32) throw new Error("APP_SECRET manquante ou trop courte (32 caractères minimum).");
   return value;
 }
 

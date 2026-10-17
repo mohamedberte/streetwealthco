@@ -5,7 +5,7 @@ Boutique en ligne (vente en France et dans l'UE, prix en EUR TTC). Ce document l
 ## 1. Prerequis
 
 - Node.js 20 ou plus recent (npm inclus)
-- Un compte Neon (PostgreSQL), Stripe, Resend et Vercel
+- Un compte Supabase (base PostgreSQL + authentification), Stripe, Resend, AWS (S3 + CloudFront) et Vercel
 - Stripe CLI (tests locaux du webhook) : https://docs.stripe.com/stripe-cli
 
 ## 2. Installation
@@ -32,34 +32,52 @@ Le code a ete ecrit sans compilation : corriger les eventuelles erreurs de type 
 | Variable | Role |
 | --- | --- |
 | `SITE_URL` | URL publique (sans slash final) |
-| `DATABASE_URL` | Chaine de connexion Neon (`?sslmode=require`) |
+| `NEXT_PUBLIC_SUPABASE_URL` | URL du projet Supabase (publique) |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Cle publique Supabase (`sb_publishable_...`, ou l'ancienne cle `anon` via `NEXT_PUBLIC_SUPABASE_ANON_KEY`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Cle `service_role` : serveur uniquement, jamais dans le navigateur ni dans un chat |
+| `APP_SECRET` | Chaine aleatoire de 32 caracteres minimum (liens de desinscription, empreintes anti-abus) |
 | `STRIPE_SECRET_KEY` | Cle secrete Stripe (`sk_test_...` puis `sk_live_...`) |
 | `STRIPE_WEBHOOK_SECRET` | Secret de signature du webhook (`whsec_...`) |
 | `RESEND_API_KEY` | Cle Resend (sans cle : e-mails ecrits dans la console) |
 | `MAIL_FROM` | Expediteur, domaine verifie dans Resend |
 | `ADMIN_EMAIL` | Recoit les alertes de commande |
-| `ADMIN_PASSWORD` | Mot de passe de `/admin` |
-| `ADMIN_SESSION_SECRET` | Chaine aleatoire de 32 caracteres minimum |
 | `S3_BUCKET` | Nom du bucket des images (minuscules, chiffres, tirets ; sans point) |
 | `S3_REGION` | Region du bucket (ex. `eu-west-3`) |
 | `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | Cle d'un utilisateur IAM limite a l'ecriture dans le bucket (section 6 bis) |
 | `CLOUDFRONT_URL` | URL publique CloudFront en `https://` (ex. `https://dxxxx.cloudfront.net` ou votre domaine) |
 | `S3_PREFIX` | Optionnel : dossier du bucket (defaut `media`) |
 
-Generer le secret de session :
+Generer `APP_SECRET` :
 
 ```powershell
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-## 4. Base de donnees (Neon)
+## 4. Base de donnees et comptes (Supabase)
 
-Neon fournit uniquement une base PostgreSQL : pas de comptes clients ni de connexion integres. C'est voulu : les clients commandent en invite, l'admin est protege par un mot de passe (voir section 9).
+Supabase fournit la base PostgreSQL et l'authentification. Les images restent sur AWS (S3 + CloudFront, section 6 bis). Le site accede aux donnees uniquement depuis le serveur, avec la cle `service_role`, apres avoir verifie les droits ; le RLS est actif sur toutes les tables (lecture publique du catalogue et des pages, un client ne lit que ses commandes).
 
-1. Creer un projet Neon (region UE, par exemple Francfort) et copier la chaine de connexion (`?sslmode=require`) dans `DATABASE_URL`. Utiliser l'URL avec pooler (`-pooler`) en production sur Vercel.
-   Ne jamais exposer cette URL cote navigateur (pas de prefixe `NEXT_PUBLIC_`).
-2. Les tables sont creees automatiquement au premier appel (voir `src/server/schema.ts`).
+1. Creer un projet Supabase (region UE, par exemple Francfort). Renseigner `NEXT_PUBLIC_SUPABASE_URL`, la cle publique et `SUPABASE_SERVICE_ROLE_KEY` (Project Settings > API).
+2. Creer les tables et fonctions : ouvrir SQL Editor, coller le contenu de `supabase/migrations/20261017000000_init.sql` et l'executer (ou `supabase db push` avec la CLI Supabase). Les transactions sensibles (reservation de stock, paiement, annulation, remboursement) sont des fonctions SQL reservees au `service_role`.
 3. Le stock par taille est initialise depuis `src/lib/products.ts` (`stockPerSize`) ; il se modifie ensuite dans `/admin`.
+4. **Compte administrateur** : Authentication > Users > Add user (e-mail + mot de passe fort, cocher "Auto Confirm User"), puis dans SQL Editor :
+
+```sql
+update auth.users
+set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"role": "admin"}'::jsonb
+where email = 'vous@exemple.com';
+```
+
+   Le role se lit dans `app_metadata`, que seul le serveur (ou ce SQL) peut modifier : un client ne peut pas se l'attribuer. Se connecter ensuite sur `/admin` avec e-mail et mot de passe. Activer la 2FA sur ce compte des que possible.
+5. **Authentication > URL Configuration** : `Site URL` = votre domaine final (`SITE_URL`) ; ajouter `http://localhost:3000/**` et le domaine final dans `Redirect URLs`.
+6. **Authentication > Email Templates** (les liens passent par `/auth/confirm`, sans cookie de tiers). Modeles complets en francais, aux couleurs de TRIPLEX, dans `supabase/templates/` : copier le contenu HTML dans le champ "Message body" et l'objet indique en commentaire en tete de fichier.
+   - *Confirm signup* : `confirmation.html` (objet : "Confirmez votre compte TRIPLEX")
+   - *Reset password* : `recovery.html` (objet : "Réinitialisation de votre mot de passe TRIPLEX")
+   - Les autres modeles (Magic link, Change email, Invite, Reauthentication) ne sont pas utilises par le site ; laisser les defauts.
+7. **Authentication > Providers > Email** : garder "Confirm email" actif. Pour la production, configurer un SMTP personnalise (Resend convient) : le SMTP integre de Supabase est tres limite en volume.
+8. Sauvegardes : activer les sauvegardes quotidiennes (offre payante) ou exporter regulierement la base.
+
+Comptes clients : facultatifs, page `/compte` (inscription avec confirmation par e-mail, connexion, mot de passe oublie, historique des commandes, suppression du compte). La commande invite reste possible. Les commandes passees avec l'adresse e-mail confirmee d'un compte apparaissent dans son historique.
 
 ## 5. Stripe
 
@@ -135,7 +153,7 @@ Sans cette configuration, l'admin affiche "Stockage d'images indisponible" et le
 
 1. Paiement confirme (webhook Stripe) : e-mail de confirmation au client (recapitulatif, droit de retractation, lien de suivi) et alerte a `ADMIN_EMAIL`.
 2. Expedition (bouton dans `/admin`, numero de suivi optionnel) : e-mail "commande expediee" avec le lien de suivi.
-3. Page de suivi `/commande/<jeton>` : le jeton est aleatoire (144 bits), unique par commande, envoye uniquement par e-mail. Elle affiche le statut, les pieces et le suivi du colis. Pas de compte client.
+3. Page de suivi `/commande/<jeton>` : le jeton est aleatoire (144 bits), unique par commande, envoye uniquement par e-mail. Elle affiche le statut, les pieces et le suivi du colis. Fonctionne sans compte client.
 4. Retour en stock : e-mail aux personnes inscrites sur la liste d'attente, avec lien de desinscription signe.
 5. Remboursement (bouton dans `/admin`) : e-mail de confirmation au client.
 
@@ -166,22 +184,23 @@ Dossier `.github/` :
 Mesures en place :
 - Paiement : aucune donnee de carte cote serveur (Stripe Checkout) ; webhook verifie par signature HMAC avec tolerance de 5 minutes, puis statut et montant reverifies aupres de Stripe.
 - Prix et totaux recalcules cote serveur depuis le catalogue en base (`src/server/catalog.ts`) / `shipping.ts` ; le navigateur n'envoie que pieces, tailles et quantites.
-- Stock : reservation atomique en transaction SQL (verrous), sans survente.
-- Requetes SQL parametrees, entrees validees avec zod, sorties HTML echappees (e-mails).
-- Admin `/admin` : mot de passe compare en temps constant, cookie `HttpOnly`, `SameSite=Strict`, `Secure` en production, signe HMAC, expire en 8 h, limitation a 5 echecs par 15 min et par visiteur, pages non indexees et jamais mises en cache. Toutes les actions admin reverifient la session cote serveur.
+- Stock : reservation atomique en transaction SQL (fonction `create_order`, verrous), sans survente.
+- Base : acces serveur uniquement (`service_role`), RLS actif sur toutes les tables, fonctions transactionnelles non executables par `anon`/`authenticated`, entrees validees avec zod, sorties HTML echappees (e-mails).
+- Admin `/admin` : Supabase Auth (e-mail + mot de passe), role `admin` dans `app_metadata` verifie aupres de Supabase a chaque requete (`getUser`), limitation a 5 echecs par 15 min et par visiteur, pages non indexees et jamais mises en cache. Toutes les actions admin reverifient le role cote serveur.
+- Comptes clients : confirmation d'e-mail obligatoire, mots de passe geres par Supabase (jamais stockes par le site), reponses identiques que l'adresse existe ou non, limitation de debit, suppression du compte avec mot de passe redemande.
 - Anti-abus : limitation de debit sur la creation de commande (le stock est reserve 30 min) et sur la liste d'attente. Adresses IP et e-mails ne sont stockes que sous forme d'empreinte, purgee apres 2 jours.
 - En-tetes HTTP : HSTS, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, CSP (anti-framing, formulaires limites a notre domaine et Stripe).
 - Envois de photos : formats PNG/JPEG/WebP uniquement, type verifie sur le contenu du fichier, 3 Mo maximum, reserves a l'admin connecte (controle de l'origine de la requete en plus du cookie `SameSite=Strict`). Bucket S3 prive (lecture uniquement via CloudFront/OAC), compte IAM limite a `PutObject`/`DeleteObject` sur le prefixe `media/`.
 - Secrets uniquement en variables d'environnement (`.env.local` ignore par git).
 
 A faire de votre cote :
-- `ADMIN_PASSWORD` : 20 caracteres ou plus, unique (gestionnaire de mots de passe). Ne jamais reutiliser un mot de passe.
-- Activer la 2FA sur GitHub, Vercel, Stripe, Neon et Resend. Proteger la branche principale.
+- Mot de passe admin : 20 caracteres ou plus, unique (gestionnaire de mots de passe), avec 2FA Supabase si possible. Ne jamais reutiliser un mot de passe.
+- Activer la 2FA sur GitHub, Vercel, Stripe, Supabase, AWS et Resend. Proteger la branche principale.
 - Renforcer l'acces admin : Vercel Deployment Protection / Cloudflare Access sur `/admin`, ou restriction par IP.
 - Verifier SPF, DKIM et DMARC du domaine d'envoi (anti-usurpation).
 - Cles Stripe : en production uniquement dans Vercel (jamais dans le code ni dans un chat) ; en cas de fuite, les regenerer.
 - Lancer `npm audit` regulierement et garder Next.js a jour.
-- Activer les sauvegardes Neon (point-in-time restore) et surveiller les journaux Vercel.
+- Surveiller les journaux Vercel et Supabase ; ne jamais exposer `SUPABASE_SERVICE_ROLE_KEY` (pas de prefixe `NEXT_PUBLIC_`).
 - Conserver les donnees de commande uniquement la duree legale (obligations comptables) et traiter les demandes RGPD sous un mois.
 
 ## 10. A completer avant la mise en ligne
@@ -196,7 +215,7 @@ A faire de votre cote :
 - Expedier depuis la Cote d'Ivoire vers la France implique douane, TVA a l'importation et eventuellement le guichet OSS / IOSS : a valider avec un comptable ou un transitaire. Les prix affiches sont TTC.
 - Un mediateur de la consommation est obligatoire pour vendre a des consommateurs en France.
 - Informer l'acheteur du droit de retractation de 14 jours (deja integre au parcours et aux CGV).
-- Pas de compte client : les commandes sont suivies via `/commande/<jeton>` (lien envoye par e-mail).
+- Les commandes peuvent se faire en invite ; un compte client est facultatif (`/compte`). Les commandes sont aussi suivies via `/commande/<jeton>` (lien envoye par e-mail).
 
 ## 12. Limites connues
 

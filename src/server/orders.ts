@@ -2,17 +2,8 @@ import "server-only";
 import { randomBytes } from "node:crypto";
 import { getProduct, type CatalogProduct } from "./catalog";
 import { policy, zones, type ZoneId } from "@/lib/shipping";
-import { query, transaction, type Queryable } from "./db";
-import {
-  SoldOutError,
-  commitDirect,
-  commitReserved,
-  releaseExpired,
-  releaseReserved,
-  reserve,
-  restock,
-  type StockLine,
-} from "./inventory";
+import { DbError, db, unwrap } from "./db";
+import { SoldOutError, ensureDefaultInventory, type StockLine } from "./inventory";
 
 export type OrderStatus =
   | "pending_payment"
@@ -36,6 +27,7 @@ export type OrderRow = {
   id: number;
   number: string;
   token: string;
+  user_id: string | null;
   status: OrderStatus;
   payment_status: "unpaid" | "paid";
   payment_ref: string | null;
@@ -68,6 +60,8 @@ export type NewOrder = {
   postalCode: string;
   address: string;
   notes?: string;
+  /** Compte client connecté (null pour une commande invité). */
+  userId?: string | null;
   items: { slug: string; size: string; quantity: number }[];
 };
 
@@ -111,95 +105,106 @@ export async function createOrder(input: NewOrder) {
   const token = randomBytes(18).toString("base64url");
   const expiresAt = new Date(Date.now() + policy.reservationMinutes * 60_000);
 
-  return transaction(async (q) => {
-    await releaseExpired(q);
-    await reserve(q, lines);
-
-    const seq = await q.query<{ n: number }>(`select nextval('order_seq')::int as n`);
-    const number = `TRX-${new Date().getFullYear()}-${String(seq[0].n).padStart(5, "0")}`;
-
-    const inserted = await q.query<{ id: number }>(
-      `insert into orders
-         (number, token, status, email, name, phone, zone, city, postal_code,
-          address, notes, subtotal, shipping, total, expires_at)
-       values ($1,$2,'pending_payment',$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
-       returning id`,
-      [
-        number,
-        token,
-        input.email.toLowerCase(),
-        input.name,
-        input.phone,
-        input.zone,
-        input.city,
-        input.postalCode,
-        input.address,
-        input.notes ?? null,
-        subtotal,
-        shipping,
-        total,
-        expiresAt,
-      ],
+  await ensureDefaultInventory();
+  try {
+    // Réservation du stock et création de la commande dans une seule transaction (fonction SQL).
+    return unwrap<{ id: number; number: string; token: string; total: number }>(
+      await db().rpc("create_order", {
+        p_email: input.email,
+        p_name: input.name,
+        p_phone: input.phone,
+        p_zone: input.zone,
+        p_city: input.city,
+        p_postal_code: input.postalCode,
+        p_address: input.address,
+        p_notes: input.notes ?? null,
+        p_subtotal: subtotal,
+        p_shipping: shipping,
+        p_total: total,
+        p_expires_at: expiresAt.toISOString(),
+        p_token: token,
+        p_user_id: input.userId ?? null,
+        p_items: lines.map((line) => ({
+          slug: line.slug,
+          size: line.size,
+          quantity: line.quantity,
+          name: catalog.get(line.slug)!.name,
+          unit_price: catalog.get(line.slug)!.price,
+        })),
+      }),
     );
-    const id = inserted[0].id;
-
-    for (const line of lines) {
-      const product = catalog.get(line.slug)!;
-      await q.query(
-        `insert into order_items (order_id, slug, name, size, quantity, unit_price)
-         values ($1,$2,$3,$4,$5,$6)`,
-        [id, line.slug, product.name, line.size, line.quantity, product.price],
-      );
-    }
-
-    return { id, number, token, total };
-  });
+  } catch (error) {
+    const sold = error instanceof DbError ? /SOLD_OUT\|([^|]+)\|(.+)$/.exec(error.message) : null;
+    if (sold) throw new SoldOutError(sold[1], sold[2]);
+    throw error;
+  }
 }
 
-async function hydrate(rows: OrderRow[]): Promise<Order[]> {
-  if (rows.length === 0) return [];
-  const ids = rows.map((row) => Number(row.id)).join(",");
-  const items = await query<OrderItem & { order_id: number }>(
-    `select order_id, slug, name, size, quantity, unit_price
-       from order_items where order_id in (${ids}) order by id`,
+type RawItem = OrderItem & { id: number };
+type RawOrder = Omit<OrderRow, "refunded_at" | "expires_at" | "created_at"> & {
+  refunded_at: string | null;
+  expires_at: string | null;
+  created_at: string;
+  order_items: RawItem[] | null;
+};
+
+const ORDER_SELECT = "*, order_items(id, slug, name, size, quantity, unit_price)";
+
+function toOrder(raw: RawOrder): Order {
+  const { order_items, ...rest } = raw;
+  return {
+    ...rest,
+    refunded_at: raw.refunded_at ? new Date(raw.refunded_at) : null,
+    expires_at: raw.expires_at ? new Date(raw.expires_at) : null,
+    created_at: new Date(raw.created_at),
+    items: [...(order_items ?? [])]
+      .sort((a, b) => a.id - b.id)
+      .map(({ slug, name, size, quantity, unit_price }) => ({ slug, name, size, quantity, unit_price })),
+  };
+}
+
+async function findOne(column: "token" | "id" | "number", value: string | number) {
+  const raw = unwrap<RawOrder | null>(
+    await db().from("orders").select(ORDER_SELECT).eq(column, value).maybeSingle(),
   );
-  return rows.map((row) => ({
-    ...row,
-    items: items.filter((item) => item.order_id === row.id),
-  }));
+  return raw ? toOrder(raw) : null;
 }
 
-export async function getOrderByToken(token: string) {
-  const rows = await query<OrderRow>(`select * from orders where token = $1`, [token]);
-  return (await hydrate(rows))[0] ?? null;
-}
-
-export async function getOrderById(id: number) {
-  const rows = await query<OrderRow>(`select * from orders where id = $1`, [id]);
-  return (await hydrate(rows))[0] ?? null;
-}
-
-export async function getOrderByNumber(number: string) {
-  const rows = await query<OrderRow>(`select * from orders where number = $1`, [number]);
-  return (await hydrate(rows))[0] ?? null;
-}
+export const getOrderByToken = (token: string) => findOne("token", token);
+export const getOrderById = (id: number) => findOne("id", id);
+export const getOrderByNumber = (number: string) => findOne("number", number);
 
 export async function setPaymentRef(id: number, ref: string) {
-  await query(`update orders set payment_ref = $2 where id = $1`, [id, ref]);
+  unwrap(await db().from("orders").update({ payment_ref: ref }).eq("id", id));
 }
 
 export async function listOrders(limit = 60, status?: OrderStatus) {
-  const rows = status
-    ? await query<OrderRow>(
-        `select * from orders where status = $2 order by created_at desc limit $1`,
-        [limit, status],
-      )
-    : await query<OrderRow>(`select * from orders order by created_at desc limit $1`, [limit]);
-  return hydrate(rows);
+  let request = db().from("orders").select(ORDER_SELECT);
+  if (status) request = request.eq("status", status);
+  return unwrap<RawOrder[]>(
+    await request.order("created_at", { ascending: false }).limit(limit),
+  ).map(toOrder);
 }
 
-const SOLD_PLAIN = `payment_status = 'paid' and status in ('confirmed', 'shipped', 'delivered')`;
-const SOLD = `o.payment_status = 'paid' and o.status in ('confirmed', 'shipped', 'delivered')`;
+/**
+ * Commandes d'un compte client : celles rattachées au compte, plus les commandes invité passées
+ * avec la même adresse e-mail (uniquement si cette adresse est confirmée par Supabase Auth).
+ */
+export async function listOrdersForUser(userId: string, verifiedEmail: string | null) {
+  const byUser = unwrap<RawOrder[]>(
+    await db().from("orders").select(ORDER_SELECT).eq("user_id", userId),
+  );
+  const byEmail = verifiedEmail
+    ? unwrap<RawOrder[]>(
+        await db().from("orders").select(ORDER_SELECT).eq("email", verifiedEmail.toLowerCase()),
+      )
+    : [];
+  const merged = new Map<number, RawOrder>();
+  for (const raw of [...byUser, ...byEmail]) merged.set(raw.id, raw);
+  return [...merged.values()]
+    .map(toOrder)
+    .sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
+}
 
 export type Stats = {
   paidOrders: number;
@@ -216,51 +221,29 @@ export type Stats = {
 
 /** Indicateurs du tableau de bord (montants TTC, livraison comprise). */
 export async function dashboardStats(): Promise<Stats> {
-  const [totals, byProduct] = await Promise.all([
-    query<{
-      paid_orders: number;
-      revenue: number;
-      revenue_7d: number;
-      revenue_30d: number;
-      to_ship: number;
-      refund_needed: number;
-      pending: number;
-      refunded_count: number;
-      refunded_total: number;
-    }>(
-      `select
-         count(*) filter (where ${SOLD_PLAIN})::int as paid_orders,
-         coalesce(sum(total) filter (where ${SOLD_PLAIN}), 0)::int as revenue,
-         coalesce(sum(total) filter (where ${SOLD_PLAIN} and created_at > now() - interval '7 days'), 0)::int as revenue_7d,
-         coalesce(sum(total) filter (where ${SOLD_PLAIN} and created_at > now() - interval '30 days'), 0)::int as revenue_30d,
-         count(*) filter (where status = 'confirmed')::int as to_ship,
-         count(*) filter (where status = 'refund_needed')::int as refund_needed,
-         count(*) filter (where status = 'pending_payment')::int as pending,
-         count(*) filter (where status = 'refunded')::int as refunded_count,
-         coalesce(sum(total) filter (where status = 'refunded'), 0)::int as refunded_total
-       from orders`,
-    ),
-    query<{ slug: string; name: string; qty: number; revenue: number }>(
-      `select oi.slug, oi.name, sum(oi.quantity)::int as qty,
-              sum(oi.quantity * oi.unit_price)::int as revenue
-         from order_items oi join orders o on o.id = oi.order_id
-        where ${SOLD}
-        group by oi.slug, oi.name
-        order by qty desc`,
-    ),
-  ]);
-  const t = totals[0];
+  const t = unwrap<{
+    paid_orders: number;
+    revenue: number;
+    revenue_7d: number;
+    revenue_30d: number;
+    to_ship: number;
+    refund_needed: number;
+    pending: number;
+    refunded_count: number;
+    refunded_total: number;
+    by_product: { slug: string; name: string; qty: number; revenue: number }[];
+  }>(await db().rpc("dashboard_stats"));
   return {
-    paidOrders: t.paid_orders,
-    revenue: t.revenue,
-    revenue7d: t.revenue_7d,
-    revenue30d: t.revenue_30d,
-    toShip: t.to_ship,
-    refundNeeded: t.refund_needed,
-    pending: t.pending,
-    refundedCount: t.refunded_count,
-    refundedTotal: t.refunded_total,
-    byProduct,
+    paidOrders: Number(t.paid_orders),
+    revenue: Number(t.revenue),
+    revenue7d: Number(t.revenue_7d),
+    revenue30d: Number(t.revenue_30d),
+    toShip: Number(t.to_ship),
+    refundNeeded: Number(t.refund_needed),
+    pending: Number(t.pending),
+    refundedCount: Number(t.refunded_count),
+    refundedTotal: Number(t.refunded_total),
+    byProduct: t.by_product ?? [],
   };
 }
 
@@ -269,25 +252,9 @@ export async function dashboardStats(): Promise<Stats> {
  * Remet les pièces en stock si demandé (retour physique) et retourne les lignes remises.
  */
 export async function markRefunded(id: number, refundRef: string, restockItems: boolean) {
-  return transaction(async (q): Promise<StockLine[]> => {
-    const order = await lockedOrder(q, id);
-    if (!order || order.status === "refunded") return [];
-
-    const lines = await q.query<StockLine>(
-      `select slug, size, quantity from order_items where order_id = $1`,
-      [id],
-    );
-    const physical = ["confirmed", "shipped", "delivered"].includes(order.status);
-    const restocked = restockItems && physical;
-    if (restocked) await restock(q, lines);
-
-    await q.query(
-      `update orders set status = 'refunded', refund_ref = $2, refunded_at = now(),
-              updated_at = now() where id = $1`,
-      [id, refundRef],
-    );
-    return restocked ? lines : [];
-  });
+  return unwrap<StockLine[]>(
+    await db().rpc("mark_refunded", { p_id: id, p_ref: refundRef, p_restock: restockItems }),
+  );
 }
 
 export type PayResult = "paid" | "already" | "refund_needed" | "mismatch" | "not_found";
@@ -297,107 +264,44 @@ export type PayResult = "paid" | "already" | "refund_needed" | "mismatch" | "not
  * plusieurs fois (retour client, webhook) pour la même commande.
  */
 export async function markPaid(number: string, paidAmount?: number) {
-  return transaction(async (q): Promise<{ result: PayResult; orderId?: number }> => {
-    const rows = await q.query<OrderRow>(
-      `select * from orders where number = $1 for update`,
-      [number],
-    );
-    const order = rows[0];
-    if (!order) return { result: "not_found" };
-    if (order.payment_status === "paid") return { result: "already", orderId: order.id };
-    if (paidAmount !== undefined && paidAmount !== order.total) {
-      return { result: "mismatch", orderId: order.id };
-    }
-
-    const lines = await q.query<StockLine>(
-      `select slug, size, quantity from order_items where order_id = $1`,
-      [order.id],
-    );
-
-    if (order.status === "pending_payment") {
-      await commitReserved(q, lines);
-    } else if (order.status === "expired") {
-      // Paiement tardif : on tente de reprendre le stock, sinon remboursement.
-      try {
-        await commitDirect(q, lines);
-      } catch (error) {
-        if (!(error instanceof SoldOutError)) throw error;
-        await q.query(
-          `update orders set status = 'refund_needed', payment_status = 'paid', updated_at = now() where id = $1`,
-          [order.id],
-        );
-        return { result: "refund_needed", orderId: order.id };
-      }
-    } else {
-      await q.query(
-        `update orders set status = 'refund_needed', payment_status = 'paid', updated_at = now() where id = $1`,
-        [order.id],
-      );
-      return { result: "refund_needed", orderId: order.id };
-    }
-
-    await q.query(
-      `update orders set status = 'confirmed', payment_status = 'paid',
-              expires_at = null, updated_at = now() where id = $1`,
-      [order.id],
-    );
-    return { result: "paid", orderId: order.id };
-  });
-}
-
-async function lockedOrder(q: Queryable, id: number) {
-  const rows = await q.query<OrderRow>(`select * from orders where id = $1 for update`, [id]);
-  return rows[0] ?? null;
+  const data = unwrap<{ result: PayResult; order_id?: number }>(
+    await db().rpc("mark_paid", { p_number: number, p_amount: paidAmount ?? null }),
+  );
+  return { result: data.result, orderId: data.order_id };
 }
 
 /** Annule une commande et remet les pièces en stock. Retourne les lignes concernées. */
 export async function cancelOrder(id: number): Promise<StockLine[]> {
-  return transaction(async (q) => {
-    const order = await lockedOrder(q, id);
-    if (!order) return [];
-    const releasable = ["pending_payment", "confirmed", "shipped", "refund_needed"];
-    if (!releasable.includes(order.status)) return [];
-
-    const lines = await q.query<StockLine>(
-      `select slug, size, quantity from order_items where order_id = $1`,
-      [id],
-    );
-    if (order.status === "pending_payment") await releaseReserved(q, lines);
-    else await restock(q, lines);
-
-    await q.query(
-      `update orders set status = 'cancelled', updated_at = now() where id = $1`,
-      [id],
-    );
-    return lines;
-  });
+  return unwrap<StockLine[]>(await db().rpc("cancel_order", { p_id: id }));
 }
 
 export async function setShipped(id: number, tracking: string | null) {
-  await query(
-    `update orders set status = 'shipped', tracking = $2, updated_at = now()
-      where id = $1 and status in ('confirmed', 'shipped')`,
-    [id, tracking],
+  unwrap(
+    await db()
+      .from("orders")
+      .update({ status: "shipped", tracking, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .in("status", ["confirmed", "shipped"]),
   );
 }
 
 export async function setDelivered(id: number) {
-  await query(
-    `update orders set status = 'delivered', updated_at = now()
-      where id = $1 and status in ('confirmed', 'shipped')`,
-    [id],
+  unwrap(
+    await db()
+      .from("orders")
+      .update({ status: "delivered", updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .in("status", ["confirmed", "shipped"]),
   );
 }
 
 export async function setStock(slug: string, size: string, stock: number) {
-  await query(
-    `update inventory set stock = greatest($3, reserved) where slug = $1 and size = $2`,
-    [slug, size, stock],
-  );
+  unwrap(await db().rpc("set_stock", { p_slug: slug, p_size: size, p_stock: stock }));
 }
 
 export async function inventoryRows() {
-  return query<{ slug: string; size: string; stock: number; reserved: number }>(
-    `select slug, size, stock, reserved from inventory`,
+  await ensureDefaultInventory();
+  return unwrap<{ slug: string; size: string; stock: number; reserved: number }[]>(
+    await db().from("inventory").select("slug, size, stock, reserved"),
   );
 }

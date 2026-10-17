@@ -5,6 +5,7 @@ import { formatPrice } from "@/lib/products";
 import { zones } from "@/lib/shipping";
 import { isAdmin } from "@/server/admin-auth";
 import { getAllProducts } from "@/server/catalog";
+import { supabaseConfigured } from "@/server/db";
 import {
   dashboardStats,
   inventoryRows,
@@ -75,26 +76,37 @@ export default async function AdminPage({ searchParams }: Props) {
   const params = await searchParams;
 
   if (!(await isAdmin())) {
-    const configured = Boolean(process.env.ADMIN_PASSWORD && process.env.ADMIN_SESSION_SECRET);
+    const configured = supabaseConfigured();
     return (
       <PageShell>
         <h1 className="font-serif text-4xl">Administration</h1>
         {!configured ? (
           <p className="mt-6 text-sm text-brown-soft">
-            Définissez ADMIN_PASSWORD et ADMIN_SESSION_SECRET dans les variables d&apos;environnement
-            (voir SETUP.md).
+            Définissez les variables Supabase (NEXT_PUBLIC_SUPABASE_URL, clé publique et
+            SUPABASE_SERVICE_ROLE_KEY) dans l&apos;environnement (voir SETUP.md).
           </p>
         ) : (
           <form action={login} className="mt-8 flex max-w-sm flex-col gap-4">
+            <label className="text-[10px] uppercase tracking-[0.22em] text-muted" htmlFor="email">
+              E-mail
+            </label>
+            <input id="email" name="email" type="email" autoComplete="username" required className={input} />
             <label className="text-[10px] uppercase tracking-[0.22em] text-muted" htmlFor="pw">
               Mot de passe
             </label>
-            <input id="pw" name="password" type="password" required className={input} />
+            <input
+              id="pw"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              className={input}
+            />
             {params.error && (
               <p role="alert" className="text-sm text-brown-soft">
                 {params.error === "locked"
                   ? "Trop de tentatives. Réessayez dans 15 minutes."
-                  : "Mot de passe incorrect."}
+                  : "Identifiants incorrects ou accès non autorisé."}
               </p>
             )}
             <button type="submit" className={btn}>

@@ -176,7 +176,7 @@ export const legalPages: LegalPage[] = [
       {
         heading: "Données collectées",
         body: [
-          "Nom, e-mail, téléphone, adresse de livraison et contenu de la commande ; adresse e-mail pour les alertes de retour en stock.",
+          "Nom, e-mail, téléphone, adresse de livraison et contenu de la commande ; adresse e-mail pour les alertes de retour en stock ; adresse e-mail et mot de passe (chiffré) si vous créez un compte client.",
         ],
       },
       {
@@ -188,13 +188,13 @@ export const legalPages: LegalPage[] = [
       {
         heading: "Destinataires",
         body: [
-          "Nos prestataires strictement nécessaires : paiement (Stripe), envoi d'e-mails (Resend), hébergement et base de données (Vercel, Neon), transport. Certains peuvent traiter des données hors de l'Union européenne, avec des garanties appropriées. Aucune donnée n'est vendue.",
+          "Nos prestataires strictement nécessaires : paiement (Stripe), envoi d'e-mails (Resend), hébergement, base de données et authentification (Vercel, Supabase), stockage des images (Amazon Web Services), transport. Certains peuvent traiter des données hors de l'Union européenne, avec des garanties appropriées. Aucune donnée n'est vendue.",
         ],
       },
       {
         heading: "Conservation",
         body: [
-          "Les données de commande sont conservées le temps nécessaire aux obligations comptables. Les inscriptions aux alertes sont conservées jusqu'à notification ou demande de suppression.",
+          "Les données de commande sont conservées le temps nécessaire aux obligations comptables. Les inscriptions aux alertes sont conservées jusqu'à notification ou demande de suppression. Un compte client est conservé jusqu'à sa suppression, que vous pouvez faire à tout moment depuis la page Compte (vos commandes restent conservées de façon détachée du compte pour nos obligations comptables).",
         ],
       },
       {

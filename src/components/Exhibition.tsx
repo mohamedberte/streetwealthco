@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { CartButton } from "@/components/CartDrawer";
@@ -373,6 +374,12 @@ export function Exhibition({
           >
             Informations
           </button>
+          <Link
+            href="/compte"
+            className="uppercase tracking-[0.24em] opacity-80 transition-opacity hover:opacity-100"
+          >
+            Compte
+          </Link>
           <CartButton />
         </div>
       </header>

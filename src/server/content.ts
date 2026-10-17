@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { brand } from "@/lib/brand";
 import { legalPages, type LegalPage } from "@/lib/legal";
-import { query } from "./db";
+import { db, unwrap } from "./db";
 
 /**
  * Pages d'information : les textes par défaut sont dans src/lib/legal.ts ; une ligne de la
@@ -76,7 +76,7 @@ const defaultPages: SitePage[] = legalPages.map((page, index) => ({
 async function loadPages(): Promise<SitePage[]> {
   let rows: PageRow[];
   try {
-    rows = await query<PageRow>("select * from site_pages");
+    rows = unwrap<PageRow[]>(await db().from("site_pages").select("*"));
   } catch (error) {
     console.warn("[content] base indisponible, pages par défaut utilisées :", error);
     return defaultPages;
@@ -119,19 +119,27 @@ export async function savePage(page: {
   position: number;
   active: boolean;
 }) {
-  await query(
-    `insert into site_pages (slug, title, intro, content, position, active)
-     values ($1, $2, $3, $4, $5, $6)
-     on conflict (slug) do update set title = excluded.title, intro = excluded.intro,
-       content = excluded.content, position = excluded.position, active = excluded.active,
-       updated_at = now()`,
-    [page.slug, page.title, page.intro, page.content, page.position, page.active],
+  unwrap(
+    await db()
+      .from("site_pages")
+      .upsert(
+        {
+          slug: page.slug,
+          title: page.title,
+          intro: page.intro,
+          content: page.content,
+          position: page.position,
+          active: page.active,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "slug" },
+      ),
   );
 }
 
 /** Page par défaut : restaure le texte du code. Page créée : la supprime. */
 export async function deletePageRow(slug: string) {
-  await query("delete from site_pages where slug = $1", [slug]);
+  unwrap(await db().from("site_pages").delete().eq("slug", slug));
 }
 
 export async function nextPagePosition() {
@@ -146,7 +154,9 @@ export type Settings = { tagline: string; logoUrl: string | null };
 async function loadSettings(): Promise<Settings> {
   const settings: Settings = { tagline: brand.tagline, logoUrl: null };
   try {
-    const rows = await query<{ key: string; value: string }>("select key, value from site_settings");
+    const rows = unwrap<{ key: string; value: string }[]>(
+      await db().from("site_settings").select("key, value"),
+    );
     for (const row of rows) {
       if (row.key === "tagline" && row.value.trim()) settings.tagline = row.value;
       if (row.key === "logo_url" && row.value.trim()) settings.logoUrl = row.value;
@@ -161,12 +171,8 @@ export const getSettings = cache(loadSettings);
 
 export async function setSetting(key: "tagline" | "logo_url", value: string | null) {
   if (value === null || value === "") {
-    await query("delete from site_settings where key = $1", [key]);
+    unwrap(await db().from("site_settings").delete().eq("key", key));
     return;
   }
-  await query(
-    `insert into site_settings (key, value) values ($1, $2)
-     on conflict (key) do update set value = excluded.value`,
-    [key, value],
-  );
+  unwrap(await db().from("site_settings").upsert({ key, value }, { onConflict: "key" }));
 }

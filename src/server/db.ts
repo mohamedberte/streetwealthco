@@ -1,77 +1,52 @@
 import "server-only";
-import postgres from "postgres";
-import { products } from "@/lib/products";
-import { SCHEMA } from "./schema";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-type Sql = ReturnType<typeof postgres>;
+/**
+ * Client Supabase côté serveur avec la clé service_role : il contourne le RLS et ne doit jamais
+ * atteindre le navigateur. Toute action qui l'utilise doit avoir vérifié l'autorisation avant
+ * (admin, propriétaire de la commande, jeton de suivi…).
+ */
+const g = globalThis as unknown as { __triplexDb?: SupabaseClient };
 
-export type Row = Record<string, unknown>;
-
-export interface Queryable {
-  query<T = Row>(text: string, params?: unknown[]): Promise<T[]>;
-}
-
-const g = globalThis as unknown as {
-  __triplexSql?: Sql;
-  __triplexReady?: Promise<void>;
-};
-
-function client(): Sql {
-  if (!g.__triplexSql) {
-    const url = process.env.DATABASE_URL;
-    if (!url) {
-      throw new Error("DATABASE_URL manquante : voir SETUP.md (section Base de données).");
-    }
-    g.__triplexSql = postgres(url, { max: 5, prepare: false });
-  }
-  return g.__triplexSql;
-}
-
-/** Crée les tables et initialise le stock manquant (sans écraser l'existant). */
-async function bootstrap(sql: Sql) {
-  await sql.unsafe(SCHEMA);
-
-  const values: unknown[] = [];
-  const tuples: string[] = [];
-  for (const product of products) {
-    for (const size of product.sizes) {
-      values.push(product.slug, size, product.stockPerSize);
-      const n = values.length;
-      tuples.push(`($${n - 2}, $${n - 1}, $${n})`);
-    }
-  }
-  await sql.unsafe(
-    `insert into inventory (slug, size, stock) values ${tuples.join(", ")} on conflict do nothing`,
-    values as never[],
+export function supabaseConfigured() {
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) &&
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
   );
 }
 
-async function ready(): Promise<Sql> {
-  const sql = client();
-  if (!g.__triplexReady) {
-    g.__triplexReady = bootstrap(sql).catch((error) => {
-      g.__triplexReady = undefined;
-      throw error;
+export function db(): SupabaseClient {
+  if (!g.__triplexDb) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) {
+      throw new Error(
+        "Supabase non configuré : NEXT_PUBLIC_SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY manquantes (voir SETUP.md).",
+      );
+    }
+    g.__triplexDb = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
   }
-  await g.__triplexReady;
-  return sql;
+  return g.__triplexDb;
 }
 
-export async function query<T = Row>(text: string, params: unknown[] = []): Promise<T[]> {
-  const sql = await ready();
-  return (await sql.unsafe(text, params as never[])) as unknown as T[];
+export class DbError extends Error {
+  constructor(
+    message: string,
+    public code?: string,
+  ) {
+    super(message);
+    this.name = "DbError";
+  }
 }
 
-export async function transaction<T>(fn: (q: Queryable) => Promise<T>): Promise<T> {
-  const sql = await ready();
-  const result = await sql.begin(async (tx) => {
-    const q: Queryable = {
-      async query<R = Row>(text: string, params: unknown[] = []) {
-        return (await tx.unsafe(text, params as never[])) as unknown as R[];
-      },
-    };
-    return (await fn(q)) as never;
-  });
-  return result as unknown as T;
+/** Retourne `data` ou lève une `DbError` si Supabase a répondu par une erreur. */
+export function unwrap<T>(result: {
+  data: unknown;
+  error: { message: string; code?: string } | null;
+}): T {
+  if (result.error) throw new DbError(result.error.message, result.error.code);
+  return result.data as T;
 }

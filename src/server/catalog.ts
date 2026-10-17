@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { garmentKinds, products as defaults, type GarmentKind, type Product, type ProductScene } from "@/lib/products";
-import { query, transaction, type Queryable } from "./db";
+import { db, unwrap } from "./db";
 
 /**
  * Catalogue : les pièces par défaut sont dans src/lib/products.ts ; une ligne de la table
@@ -88,10 +88,16 @@ async function loadAll(): Promise<CatalogProduct[]> {
   let rows: Row[];
   let sceneRows: SceneRow[];
   try {
-    rows = await query<Row>("select * from products");
-    sceneRows = await query<SceneRow>(
-      "select id, slug, position, title, caption, image from product_scenes order by position, id",
-    );
+    const [productsResult, scenesResult] = await Promise.all([
+      db().from("products").select("*"),
+      db()
+        .from("product_scenes")
+        .select("id, slug, position, title, caption, image")
+        .order("position")
+        .order("id"),
+    ]);
+    rows = unwrap<Row[]>(productsResult);
+    sceneRows = unwrap<SceneRow[]>(scenesResult);
   } catch (error) {
     console.warn("[catalog] base indisponible, catalogue par défaut utilisé :", error);
     return defaultProducts;
@@ -133,52 +139,49 @@ export async function getAnyProduct(slug: string): Promise<CatalogProduct | unde
   return (await getAllProducts()).find((product) => product.slug === slug);
 }
 
-async function upsert(q: Queryable, product: CatalogProduct) {
-  await q.query(
-    `insert into products (slug, position, name, word, silhouette, price, description, fabric,
-       edition, sizes, stock_per_size, kind, tone_bg, tone_ink, tone_fill, tone_line, tone_accent,
-       image, active)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
-     on conflict (slug) do update set
-       position = excluded.position, name = excluded.name, word = excluded.word,
-       silhouette = excluded.silhouette, price = excluded.price,
-       description = excluded.description, fabric = excluded.fabric, edition = excluded.edition,
-       sizes = excluded.sizes, stock_per_size = excluded.stock_per_size, kind = excluded.kind,
-       tone_bg = excluded.tone_bg, tone_ink = excluded.tone_ink, tone_fill = excluded.tone_fill,
-       tone_line = excluded.tone_line, tone_accent = excluded.tone_accent,
-       image = excluded.image, active = excluded.active, updated_at = now()`,
-    [
-      product.slug,
-      product.position,
-      product.name,
-      product.word,
-      product.silhouette,
-      product.price,
-      product.description,
-      product.fabric,
-      product.edition,
-      product.sizes.join(","),
-      product.stockPerSize,
-      product.kind,
-      product.tone.bg,
-      product.tone.ink,
-      product.tone.fill,
-      product.tone.line,
-      product.tone.accent ?? null,
-      product.image ?? null,
-      product.active,
-    ],
+async function upsert(product: CatalogProduct) {
+  unwrap(
+    await db()
+      .from("products")
+      .upsert(
+        {
+          slug: product.slug,
+          position: product.position,
+          name: product.name,
+          word: product.word,
+          silhouette: product.silhouette,
+          price: product.price,
+          description: product.description,
+          fabric: product.fabric,
+          edition: product.edition,
+          sizes: product.sizes.join(","),
+          stock_per_size: product.stockPerSize,
+          kind: product.kind,
+          tone_bg: product.tone.bg,
+          tone_ink: product.tone.ink,
+          tone_fill: product.tone.fill,
+          tone_line: product.tone.line,
+          tone_accent: product.tone.accent ?? null,
+          image: product.image ?? null,
+          active: product.active,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "slug" },
+      ),
   );
 }
 
 /** Crée les lignes de stock manquantes (stock initial) sans toucher à l'existant. */
-async function ensureInventory(q: Queryable, product: CatalogProduct, initialStock: number) {
-  for (const size of product.sizes) {
-    await q.query(
-      "insert into inventory (slug, size, stock) values ($1, $2, $3) on conflict do nothing",
-      [product.slug, size, initialStock],
-    );
-  }
+async function ensureInventory(product: CatalogProduct, initialStock: number) {
+  if (product.sizes.length === 0) return;
+  unwrap(
+    await db()
+      .from("inventory")
+      .upsert(
+        product.sizes.map((size) => ({ slug: product.slug, size, stock: initialStock })),
+        { onConflict: "slug,size", ignoreDuplicates: true },
+      ),
+  );
 }
 
 export type ProductFields = Omit<Product, "slug" | "image" | "scenes">;
@@ -186,10 +189,8 @@ export type ProductFields = Omit<Product, "slug" | "image" | "scenes">;
 /** Crée une pièce ; le stock initial par taille est `stockPerSize`. */
 export async function createProduct(slug: string, fields: ProductFields, position: number) {
   const product: CatalogProduct = { ...fields, slug, position, active: true, fromDb: true };
-  await transaction(async (q) => {
-    await upsert(q, product);
-    await ensureInventory(q, product, product.stockPerSize);
-  });
+  await upsert(product);
+  await ensureInventory(product, product.stockPerSize);
 }
 
 /** Modifie une pièce existante (l'image et l'état archivé sont conservés). */
@@ -197,24 +198,22 @@ export async function updateProduct(slug: string, fields: ProductFields, positio
   const current = await getAnyProduct(slug);
   if (!current) throw new Error("Pièce introuvable.");
   const product: CatalogProduct = { ...current, ...fields, slug, position, fromDb: true };
-  await transaction(async (q) => {
-    await upsert(q, product);
-    // Nouvelles tailles : stock à 0 (à renseigner ensuite dans « Stock »).
-    await ensureInventory(q, product, 0);
-  });
+  await upsert(product);
+  // Nouvelles tailles : stock à 0 (à renseigner ensuite dans « Stock »).
+  await ensureInventory(product, 0);
 }
 
 export async function setProductActive(slug: string, active: boolean) {
   const current = await getAnyProduct(slug);
   if (!current) throw new Error("Pièce introuvable.");
-  await transaction((q) => upsert(q, { ...current, active, fromDb: true }));
+  await upsert({ ...current, active, fromDb: true });
 }
 
 /** `image` = chemin local ou URL CloudFront ; `null` pour retirer. */
 export async function setProductImage(slug: string, image: string | null) {
   const current = await getAnyProduct(slug);
   if (!current) throw new Error("Pièce introuvable.");
-  await transaction((q) => upsert(q, { ...current, image: image ?? undefined, fromDb: true }));
+  await upsert({ ...current, image: image ?? undefined, fromDb: true });
 }
 
 export async function nextPosition() {
@@ -229,34 +228,32 @@ export type SceneFields = { title: string; caption: string };
 
 /** Ajoute une scène en fin de liste ; renvoie false si la limite est atteinte. */
 export async function addScene(slug: string, fields: SceneFields, image: string) {
-  return transaction(async (q) => {
-    const rows = await q.query<{ count: number | string; max: number | null }>(
-      "select count(*)::int as count, coalesce(max(position), 0)::int as max from product_scenes where slug = $1",
-      [slug],
-    );
-    if (Number(rows[0]?.count ?? 0) >= MAX_SCENES) return false;
-    await q.query(
-      "insert into product_scenes (slug, position, title, caption, image) values ($1, $2, $3, $4, $5)",
-      [slug, Number(rows[0]?.max ?? 0) + 10, fields.title, fields.caption, image],
-    );
-    return true;
-  });
+  const existing = unwrap<{ position: number }[]>(
+    await db().from("product_scenes").select("position").eq("slug", slug),
+  );
+  if (existing.length >= MAX_SCENES) return false;
+  const max = existing.reduce((highest, row) => Math.max(highest, Number(row.position)), 0);
+  unwrap(
+    await db()
+      .from("product_scenes")
+      .insert({ slug, position: max + 10, title: fields.title, caption: fields.caption, image }),
+  );
+  return true;
 }
 
 export async function updateScene(id: number, fields: SceneFields, position: number) {
-  await query("update product_scenes set title = $2, caption = $3, position = $4 where id = $1", [
-    id,
-    fields.title,
-    fields.caption,
-    position,
-  ]);
+  unwrap(
+    await db()
+      .from("product_scenes")
+      .update({ title: fields.title, caption: fields.caption, position })
+      .eq("id", id),
+  );
 }
 
 /** Supprime une scène et renvoie son image (à retirer du stockage), ou null si introuvable. */
 export async function deleteScene(id: number): Promise<{ slug: string; image: string } | null> {
-  const rows = await query<{ slug: string; image: string }>(
-    "delete from product_scenes where id = $1 returning slug, image",
-    [id],
+  const rows = unwrap<{ slug: string; image: string }[]>(
+    await db().from("product_scenes").delete().eq("id", id).select("slug, image"),
   );
   return rows[0] ?? null;
 }

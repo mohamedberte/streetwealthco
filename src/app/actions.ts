@@ -13,6 +13,7 @@ import {
   setPaymentRef,
 } from "@/server/orders";
 import { createCheckoutSession, stripeConfigured } from "@/server/stripe";
+import { currentUser } from "@/server/auth";
 import { clientKey, hashKey, isLimited, recordEvent } from "@/server/rate-limit";
 import { addToWaitlist } from "@/server/waitlist";
 
@@ -74,8 +75,10 @@ export async function placeOrder(raw: unknown): Promise<ActionResult> {
   await recordEvent("order-email", emailKey);
 
   let created: { id: number; number: string; token: string; total: number };
+  const user = await currentUser();
   try {
     created = await createOrder({
+      userId: user?.id ?? null,
       email: data.email,
       name: data.name,
       phone: data.phone,

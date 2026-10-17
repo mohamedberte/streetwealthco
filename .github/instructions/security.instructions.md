@@ -4,16 +4,18 @@ applyTo: "src/server/**,src/app/**/actions.ts,src/app/**/content-actions.ts,src/
 ---
 # Securite - regles a respecter a chaque modification
 
-## Authentification admin
-- Toute server action et tout route handler sous `/admin` appelle `requireAdmin()` / `isAdmin()` en premier, avant toute lecture ou ecriture. Une page admin non connectee redirige vers `/admin`.
-- Le cookie `triplex_admin` reste `HttpOnly`, `SameSite=Strict`, `Secure` en production, `path=/admin`. Un route handler qui a besoin de la session doit donc vivre sous `/admin`.
+## Authentification (admin et clients)
+- Supabase Auth (`@supabase/ssr`, session en cookies rafraichie par `src/proxy.ts`). Le role admin est `app_metadata.role = 'admin'` : jamais `user_metadata` (modifiable par l'utilisateur).
+- L'identite se verifie avec `currentUser()` (`auth.getUser()`, validee par Supabase), jamais avec le simple contenu du cookie ni `getSession()`.
+- Toute server action et tout route handler sous `/admin` appelle `requireAdmin()` / `isAdmin()` en premier, avant toute lecture ou ecriture. Une page admin non connectee affiche le formulaire de connexion.
 - Un POST hors server action (route handler) verifie en plus l'en-tete `Origin` (meme hote).
-- Le login reste limite (`isLimited`), avec comparaison a temps constant. `ADMIN_SESSION_SECRET` >= 32 caracteres.
+- Les logins (admin et clients) restent limites (`isLimited`). Les formulaires de compte ne revelent pas si une adresse existe. Redirections (`/auth/confirm`) uniquement vers un chemin interne.
+- Le client Supabase `db()` utilise la cle `service_role` (contourne le RLS) : serveur uniquement, apres verification des droits ; le RLS reste actif sur toutes les tables en defense en profondeur. Les fonctions SQL transactionnelles ne sont executables que par `service_role`.
 
 ## Entrees et base de donnees
 - Toute entree (FormData, JSON, query, params) est validee avec zod ou une regex stricte, avec des bornes de longueur. Jamais de confiance dans un champ cache.
-- SQL uniquement parametre (`$1, $2`). Aucune concatenation de valeurs utilisateur. Les seuls fragments dynamiques autorises sont des constantes du code.
-- Pas de `select *` sur des tables contenant des secrets ou des donnees personnelles renvoyees au client : liste explicite de colonnes.
+- Acces aux donnees via supabase-js (requetes parametrees par construction) ou fonctions SQL `rpc`. Aucun SQL construit par concatenation de valeurs utilisateur, y compris dans les filtres `.or()` / `.ilike()`.
+- Pas de `select("*")` sur des tables contenant des secrets ou des donnees personnelles renvoyees au client : liste explicite de colonnes.
 - Les prix, noms et tailles d'une commande sont toujours recalcules cote serveur depuis le catalogue (`src/server/catalog.ts`), jamais lus depuis le client.
 
 ## Fichiers et medias
