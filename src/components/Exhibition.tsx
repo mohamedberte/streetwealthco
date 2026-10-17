@@ -8,6 +8,7 @@ import { useCart } from "@/components/CartProvider";
 import { Garment } from "@/components/Garment";
 import { InfoPanel } from "@/components/InfoPanel";
 import { Logo } from "@/components/Logo";
+import { Lookbook } from "@/components/Lookbook";
 import { Reserve } from "@/components/Reserve";
 import { editionTotal, formatPrice, isLimited, type Product } from "@/lib/products";
 
@@ -49,10 +50,14 @@ export function Exhibition({
   const lockUntil = useRef(0);
   const cartOpenRef = useRef(false);
   const infoOpenRef = useRef(false);
+  const lookbookOpenRef = useRef(false);
+  /** Vrai si le dernier geste sur la pièce était un glisser (pas un clic). */
+  const draggedRef = useRef(false);
   const [index, setIndex] = useState(initialIndex);
   const [hinted, setHinted] = useState(true);
   const [avail, setAvail] = useState<Availability>(availability);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [lookbookOpen, setLookbookOpen] = useState(false);
 
   useEffect(() => {
     cartOpenRef.current = cartOpen;
@@ -61,6 +66,10 @@ export function Exhibition({
   useEffect(() => {
     infoOpenRef.current = infoOpen;
   }, [infoOpen]);
+
+  useEffect(() => {
+    lookbookOpenRef.current = lookbookOpen;
+  }, [lookbookOpen]);
 
   /* Disponibilités à jour : au retour sur l'onglet et régulièrement */
   useEffect(() => {
@@ -262,7 +271,7 @@ export function Exhibition({
       const now = performance.now();
       const fresh = now - lastWheel > 180;
       lastWheel = now;
-      if (cartOpenRef.current || infoOpenRef.current || now < lockUntil.current) return;
+      if (cartOpenRef.current || infoOpenRef.current || lookbookOpenRef.current || now < lockUntil.current) return;
       const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
       if (Math.abs(delta) < 8) return;
       if (!fresh && Math.abs(delta) < 60) return;
@@ -279,10 +288,12 @@ export function Exhibition({
       dragging = true;
       startX = event.clientX;
       dx = 0;
+      draggedRef.current = false;
     };
     const onDrag = (event: PointerEvent) => {
       if (!dragging) return;
       dx = event.clientX - startX;
+      if (Math.abs(dx) > 6) draggedRef.current = true;
       const art = activeArt();
       if (art) {
         gsap.to(art, { x: dx * 0.5, rotation: dx * 0.02, duration: 0.35, ease: "power3.out", overwrite: "auto" });
@@ -305,7 +316,7 @@ export function Exhibition({
 
     /* Clavier */
     const onKey = (event: KeyboardEvent) => {
-      if (cartOpenRef.current || infoOpenRef.current) return;
+      if (cartOpenRef.current || infoOpenRef.current || lookbookOpenRef.current) return;
       if (["ArrowRight", "ArrowDown", "PageDown"].includes(event.key)) next();
       else if (["ArrowLeft", "ArrowUp", "PageUp"].includes(event.key)) prev();
       else if (event.key === "Home") go(0);
@@ -333,6 +344,9 @@ export function Exhibition({
   }, [go, next, prev, COUNT]);
 
   const first = products[initialIndex].tone;
+  const activeScenes = products[index].scenes ?? [];
+
+  const closeLookbook = useCallback(() => setLookbookOpen(false), []);
 
   return (
     <main
@@ -400,7 +414,13 @@ export function Exhibition({
             </div>
 
             <div className="absolute inset-0 flex items-center justify-center">
-              <div data-art className="h-[88%] max-w-[92%] aspect-[5/6]">
+              <div
+                data-art
+                className={`h-[88%] max-w-[92%] aspect-[5/6] ${product.scenes?.length ? "cursor-pointer" : ""}`}
+                onClick={() => {
+                  if (product.scenes?.length && !draggedRef.current) setLookbookOpen(true);
+                }}
+              >
                 <div data-tilt className="h-full w-full">
                   <div data-float className="relative h-full w-full">
                     {product.image ? (
@@ -442,6 +462,16 @@ export function Exhibition({
                 <span className="opacity-60"> · Édition {product.edition}</span>
               </p>
               <Gauge product={product} avail={avail[product.slug]} />
+              {product.scenes && product.scenes.length > 0 && (
+                <button
+                  type="button"
+                  data-reveal
+                  onClick={() => setLookbookOpen(true)}
+                  className="mt-4 text-[10px] uppercase tracking-[0.26em] underline decoration-current/40 underline-offset-8 transition-opacity hover:decoration-current"
+                >
+                  Voir les looks · {product.scenes.length}
+                </button>
+              )}
             </div>
 
             <div className="flex flex-col gap-4 sm:items-end">
@@ -529,6 +559,15 @@ export function Exhibition({
       </nav>
 
       <InfoPanel open={infoOpen} onClose={() => setInfoOpen(false)} pages={pages} />
+
+      {lookbookOpen && activeScenes.length > 0 && (
+        <Lookbook
+          key={products[index].slug}
+          product={products[index]}
+          scenes={activeScenes}
+          onClose={closeLookbook}
+        />
+      )}
     </main>
   );
 }

@@ -110,4 +110,16 @@ create table if not exists site_settings (
   key text primary key,
   value text not null
 );
+
+create table if not exists product_scenes (
+  id bigserial primary key,
+  slug text not null,
+  position integer not null default 0,
+  title text not null,
+  caption text not null default '',
+  image text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists product_scenes_slug_idx on product_scenes (slug, position);
 `;

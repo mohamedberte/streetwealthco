@@ -40,12 +40,16 @@ const NOTICES: Record<string, string> = {
   reset: "Texte d'origine restauré.",
   image_saved: "Image enregistrée.",
   image_removed: "Image retirée.",
+  scene_added: "Look ajouté.",
+  scene_removed: "Look retiré.",
 };
 
 const ERRORS: Record<string, string> = {
   image_missing: "Aucun fichier sélectionné.",
   image_size: "Image trop lourde (3 Mo maximum).",
   image_type: "Format non accepté : PNG, JPEG ou WebP uniquement.",
+  scene_text: "Titre du look : 2 à 60 caractères ; légende : 200 maximum.",
+  scene_limit: "Nombre maximal de looks atteint pour cette pièce (8). Retirez-en un d'abord.",
   image_storage:
     "Stockage d'images indisponible : vérifier la configuration S3 / CloudFront (variables S3_* et CLOUDFRONT_URL) et les droits du compte AWS.",
   unknown: "Élément introuvable.",
@@ -69,6 +73,7 @@ const FIELDS: Record<string, string> = {
   accent: "Couleur d'accent",
   position: "Ordre",
   title: "Titre",
+  caption: "Légende",
   intro: "Introduction",
   content: "Contenu",
   tagline: "Accroche",

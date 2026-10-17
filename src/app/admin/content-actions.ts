@@ -13,6 +13,7 @@ import {
   slugify,
   uniqueSlug,
   updateProduct,
+  updateScene,
   type ProductFields,
 } from "@/server/catalog";
 import {
@@ -137,6 +138,34 @@ export async function setProductActiveAction(formData: FormData) {
   await setProductActive(slug, formData.get("active") === "yes");
   revalidatePath("/", "layout");
   redirect(`/admin/produits?notice=saved#p-${slug}`);
+}
+
+const sceneSchema = z.object({
+  id: z.coerce.number().int().positive(),
+  title: z.string().trim().min(2).max(60),
+  caption: z.string().trim().max(200),
+  position: z.coerce.number().int().min(0).max(100_000),
+});
+
+/** Modifie le titre, la légende et l'ordre d'une scène (looks). */
+export async function updateSceneAction(formData: FormData) {
+  await requireAdmin();
+  const slug = text(formData, "slug");
+  const anchor = SLUG.test(slug) ? `#p-${slug}` : "";
+  const parsed = sceneSchema.safeParse({
+    id: text(formData, "sceneId"),
+    title: text(formData, "title"),
+    caption: text(formData, "caption"),
+    position: text(formData, "position"),
+  });
+  if (!parsed.success) {
+    const field = String(parsed.error.issues[0]?.path[0] ?? "form");
+    redirect(`/admin/produits?error=invalid&field=${field === "id" ? "form" : field}${anchor}`);
+  }
+  const { id, title, caption, position } = parsed.data;
+  await updateScene(id, { title, caption }, position);
+  revalidatePath("/", "layout");
+  redirect(`/admin/produits?notice=saved${anchor}`);
 }
 
 const pageSchema = z.object({

@@ -49,6 +49,22 @@ export type Product = {
    * Si absente, l'illustration vectorielle est utilisée.
    */
   image?: string;
+  /**
+   * Scènes (looks) : photos de la pièce portée dans différents lieux, gérées dans l'admin.
+   * Affichées dans la vue « Looks » ouverte depuis la pièce.
+   */
+  scenes?: ProductScene[];
+};
+
+export type ProductScene = {
+  id: number;
+  /** Ordre d'affichage (croissant). */
+  position: number;
+  /** Lieu ou ambiance, ex. « Plateau, heure dorée ». */
+  title: string;
+  caption: string;
+  /** URL CloudFront de la photo. */
+  image: string;
 };
 
 const STANDARD_SIZES = ["XS", "S", "M", "L", "XL"];

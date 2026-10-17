@@ -4,9 +4,9 @@ import { redirect } from "next/navigation";
 import { PageShell } from "@/components/PageShell";
 import { formatPrice } from "@/lib/products";
 import { isAdmin } from "@/server/admin-auth";
-import { getAllProducts } from "@/server/catalog";
+import { getAllProducts, MAX_SCENES } from "@/server/catalog";
 import { AdminHeader, Banner } from "../AdminHeader";
-import { setProductActiveAction } from "../content-actions";
+import { setProductActiveAction, updateSceneAction } from "../content-actions";
 import { ProductForm } from "../ProductForm";
 import { btn, input, label, sectionTitle } from "../ui";
 
@@ -122,6 +122,120 @@ export default async function ProductsAdminPage({ searchParams }: Props) {
                     </button>
                   </form>
                 </div>
+              </div>
+
+              <div className="border-t border-border pt-5">
+                <p className={label}>
+                  Looks ({product.scenes?.length ?? 0}/{MAX_SCENES}) — photos portées, par lieu ou ambiance
+                </p>
+                <p className="mt-1 text-xs text-muted">
+                  Ouverts depuis la pièce (clic sur la pièce ou « Voir les looks »). Format conseillé : paysage
+                  3:2, sujet centré. Voir docs/prompts-images.md.
+                </p>
+
+                <ul className="mt-4 space-y-4">
+                  {(product.scenes ?? []).map((scene) => (
+                    <li
+                      key={scene.id}
+                      className="grid gap-4 border border-border bg-white p-3 sm:grid-cols-[9rem_1fr_auto]"
+                    >
+                      <div className="relative h-24 w-36 bg-cream">
+                        <Image
+                          src={scene.image}
+                          alt={scene.title}
+                          fill
+                          sizes="144px"
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </div>
+                      <form action={updateSceneAction} className="grid gap-2">
+                        <input type="hidden" name="slug" value={product.slug} />
+                        <input type="hidden" name="sceneId" value={scene.id} />
+                        <input
+                          name="title"
+                          defaultValue={scene.title}
+                          required
+                          minLength={2}
+                          maxLength={60}
+                          aria-label="Titre du look"
+                          className={input}
+                        />
+                        <input
+                          name="caption"
+                          defaultValue={scene.caption}
+                          maxLength={200}
+                          aria-label="Légende du look"
+                          placeholder="Légende (optionnelle)"
+                          className={input}
+                        />
+                        <div className="flex items-center gap-3">
+                          <label className="flex items-center gap-2 text-xs text-muted">
+                            Ordre
+                            <input
+                              name="position"
+                              type="number"
+                              min={0}
+                              defaultValue={scene.position}
+                              className={`${input} w-20`}
+                            />
+                          </label>
+                          <button type="submit" className={btn}>
+                            Enregistrer
+                          </button>
+                        </div>
+                      </form>
+                      <form action="/admin/media" method="post" encType="multipart/form-data">
+                        <input type="hidden" name="target" value="scene" />
+                        <input type="hidden" name="slug" value={product.slug} />
+                        <input type="hidden" name="operation" value="remove" />
+                        <input type="hidden" name="sceneId" value={scene.id} />
+                        <button type="submit" className={btn}>
+                          Retirer
+                        </button>
+                      </form>
+                    </li>
+                  ))}
+                </ul>
+
+                {(product.scenes?.length ?? 0) < MAX_SCENES && (
+                  <form
+                    action="/admin/media"
+                    method="post"
+                    encType="multipart/form-data"
+                    className="mt-4 grid gap-3 sm:grid-cols-2"
+                  >
+                    <input type="hidden" name="target" value="scene" />
+                    <input type="hidden" name="slug" value={product.slug} />
+                    <input type="hidden" name="operation" value="add" />
+                    <input
+                      name="title"
+                      required
+                      minLength={2}
+                      maxLength={60}
+                      placeholder="Titre : lieu ou ambiance (ex. Plateau, heure dorée)"
+                      aria-label="Titre du nouveau look"
+                      className={input}
+                    />
+                    <input
+                      name="caption"
+                      maxLength={200}
+                      placeholder="Légende (optionnelle)"
+                      aria-label="Légende du nouveau look"
+                      className={input}
+                    />
+                    <input
+                      type="file"
+                      name="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      required
+                      className={input}
+                    />
+                    <button type="submit" className={`${btn} sm:justify-self-start`}>
+                      Ajouter le look
+                    </button>
+                  </form>
+                )}
               </div>
             </div>
           </details>

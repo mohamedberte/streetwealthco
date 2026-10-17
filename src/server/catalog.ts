@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { garmentKinds, products as defaults, type GarmentKind, type Product } from "@/lib/products";
+import { garmentKinds, products as defaults, type GarmentKind, type Product, type ProductScene } from "@/lib/products";
 import { query, transaction, type Queryable } from "./db";
 
 /**
@@ -36,6 +36,15 @@ type Row = {
   tone_accent: string | null;
   image: string | null;
   active: boolean;
+};
+
+type SceneRow = {
+  id: number | string;
+  slug: string;
+  position: number;
+  title: string;
+  caption: string;
+  image: string;
 };
 
 const defaultProducts: CatalogProduct[] = defaults.map((product, index) => ({
@@ -77,17 +86,34 @@ function fromRow(row: Row): CatalogProduct {
 
 async function loadAll(): Promise<CatalogProduct[]> {
   let rows: Row[];
+  let sceneRows: SceneRow[];
   try {
     rows = await query<Row>("select * from products");
+    sceneRows = await query<SceneRow>(
+      "select id, slug, position, title, caption, image from product_scenes order by position, id",
+    );
   } catch (error) {
     console.warn("[catalog] base indisponible, catalogue par défaut utilisé :", error);
     return defaultProducts;
   }
+  const scenes = new Map<string, ProductScene[]>();
+  for (const row of sceneRows) {
+    const list = scenes.get(row.slug) ?? [];
+    list.push({
+      id: Number(row.id),
+      position: Number(row.position),
+      title: row.title,
+      caption: row.caption,
+      image: row.image,
+    });
+    scenes.set(row.slug, list);
+  }
+
   const merged = new Map(defaultProducts.map((product) => [product.slug, product]));
   for (const row of rows) merged.set(row.slug, fromRow(row));
-  return [...merged.values()].sort(
-    (a, b) => a.position - b.position || a.name.localeCompare(b.name, "fr"),
-  );
+  return [...merged.values()]
+    .map((product) => ({ ...product, scenes: scenes.get(product.slug) ?? [] }))
+    .sort((a, b) => a.position - b.position || a.name.localeCompare(b.name, "fr"));
 }
 
 /** Toutes les pièces, archivées comprises (admin). Mémorisé le temps d'une requête. */
@@ -155,7 +181,7 @@ async function ensureInventory(q: Queryable, product: CatalogProduct, initialSto
   }
 }
 
-export type ProductFields = Omit<Product, "slug" | "image">;
+export type ProductFields = Omit<Product, "slug" | "image" | "scenes">;
 
 /** Crée une pièce ; le stock initial par taille est `stockPerSize`. */
 export async function createProduct(slug: string, fields: ProductFields, position: number) {
@@ -194,6 +220,45 @@ export async function setProductImage(slug: string, image: string | null) {
 export async function nextPosition() {
   const all = await getAllProducts();
   return all.reduce((max, product) => Math.max(max, product.position), 0) + 10;
+}
+
+/** Nombre maximal de scènes (looks) par pièce. */
+export const MAX_SCENES = 8;
+
+export type SceneFields = { title: string; caption: string };
+
+/** Ajoute une scène en fin de liste ; renvoie false si la limite est atteinte. */
+export async function addScene(slug: string, fields: SceneFields, image: string) {
+  return transaction(async (q) => {
+    const rows = await q.query<{ count: number | string; max: number | null }>(
+      "select count(*)::int as count, coalesce(max(position), 0)::int as max from product_scenes where slug = $1",
+      [slug],
+    );
+    if (Number(rows[0]?.count ?? 0) >= MAX_SCENES) return false;
+    await q.query(
+      "insert into product_scenes (slug, position, title, caption, image) values ($1, $2, $3, $4, $5)",
+      [slug, Number(rows[0]?.max ?? 0) + 10, fields.title, fields.caption, image],
+    );
+    return true;
+  });
+}
+
+export async function updateScene(id: number, fields: SceneFields, position: number) {
+  await query("update product_scenes set title = $2, caption = $3, position = $4 where id = $1", [
+    id,
+    fields.title,
+    fields.caption,
+    position,
+  ]);
+}
+
+/** Supprime une scène et renvoie son image (à retirer du stockage), ou null si introuvable. */
+export async function deleteScene(id: number): Promise<{ slug: string; image: string } | null> {
+  const rows = await query<{ slug: string; image: string }>(
+    "delete from product_scenes where id = $1 returning slug, image",
+    [id],
+  );
+  return rows[0] ?? null;
 }
 
 /** Texte -> identifiant d'URL (a-z, 0-9, tirets). */

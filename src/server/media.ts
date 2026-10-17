@@ -31,8 +31,8 @@ export function sniffImage(data: Uint8Array): ImageType | null {
  * CLOUDFRONT_URL (https://...), S3_PREFIX (optionnel, défaut `media`).
  */
 
-/** Clés autorisées : `logo` ou `product-<slug>` (a-z, 0-9, tirets). */
-export const MEDIA_KEY = /^(logo|product-[a-z0-9-]{1,80})$/;
+/** Clés autorisées : `logo`, `product-<slug>` ou `scene-<slug>` (a-z, 0-9, tirets). */
+export const MEDIA_KEY = /^(logo|(product|scene)-[a-z0-9-]{1,80})$/;
 
 const EXTENSIONS: Record<ImageType, string> = {
   "image/png": "png",
@@ -150,7 +150,7 @@ export async function deleteMediaByUrl(url: string | null | undefined) {
 
   const objectKey = url.slice(config.baseUrl.length + 1);
   // Le préfixe ne contient que [A-Za-z0-9/_-] (voir readConfig) : pas de caractère spécial de regex.
-  const valid = new RegExp(`^${config.prefix}/(logo|product-[a-z0-9-]{1,80})/\\d+\\.(png|jpg|webp)$`);
+  const valid = new RegExp(`^${config.prefix}/(logo|(product|scene)-[a-z0-9-]{1,80})/\\d+\\.(png|jpg|webp)$`);
   if (!valid.test(objectKey)) return;
   try {
     await s3Request(config, "DELETE", objectKey);

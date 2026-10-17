@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { isAdmin } from "@/server/admin-auth";
-import { getAnyProduct, setProductImage } from "@/server/catalog";
+import { addScene, deleteScene, getAnyProduct, setProductImage } from "@/server/catalog";
 import { getSettings, setSetting } from "@/server/content";
 import {
   deleteMediaByUrl,
@@ -14,6 +14,61 @@ export const dynamic = "force-dynamic";
 
 const redirectTo = (path: string) =>
   new Response(null, { status: 303, headers: { Location: path } });
+
+const SLUG = /^[a-z0-9-]{1,80}$/;
+
+/** Lit, contrôle (taille, vrai format) et envoie l'image du formulaire ; renvoie l'URL ou un code d'erreur. */
+async function uploadFromForm(
+  form: FormData,
+  key: string,
+): Promise<{ url: string } | { error: string }> {
+  const file = form.get("file");
+  if (!(file instanceof File) || file.size === 0) return { error: "image_missing" };
+  if (file.size > MAX_IMAGE_BYTES) return { error: "image_size" };
+  if (!isMediaConfigured()) return { error: "image_storage" };
+  const data = Buffer.from(await file.arrayBuffer());
+  const type = sniffImage(data);
+  if (!type) return { error: "image_type" };
+  try {
+    return { url: await uploadMedia(key, type, data) };
+  } catch (error) {
+    console.error("Envoi d'image impossible", error);
+    return { error: "image_storage" };
+  }
+}
+
+/** Scènes (looks) d'une pièce : ajout avec titre et légende, ou retrait. */
+async function handleScene(form: FormData, slug: string, operation: FormDataEntryValue | null) {
+  const anchor = SLUG.test(slug) ? `#p-${slug}` : "";
+  const done = (code: string) => redirectTo(`/admin/produits?notice=${code}${anchor}`);
+  const fail = (code: string) => redirectTo(`/admin/produits?error=${code}${anchor}`);
+
+  if (operation === "remove") {
+    const id = Number(form.get("sceneId"));
+    if (!Number.isInteger(id) || id <= 0) return new Response("Requête invalide", { status: 400 });
+    const removed = await deleteScene(id);
+    if (!removed) return fail("unknown");
+    await deleteMediaByUrl(removed.image);
+    revalidatePath("/", "layout");
+    return redirectTo(`/admin/produits?notice=scene_removed#p-${removed.slug}`);
+  }
+
+  if (!SLUG.test(slug) || !(await getAnyProduct(slug))) return fail("unknown");
+  const title = String(form.get("title") ?? "").trim();
+  const caption = String(form.get("caption") ?? "").trim();
+  if (title.length < 2 || title.length > 60 || caption.length > 200) return fail("scene_text");
+
+  const uploaded = await uploadFromForm(form, `scene-${slug}`);
+  if ("error" in uploaded) return fail(uploaded.error);
+
+  const added = await addScene(slug, { title, caption }, uploaded.url);
+  if (!added) {
+    await deleteMediaByUrl(uploaded.url);
+    return fail("scene_limit");
+  }
+  revalidatePath("/", "layout");
+  return done("scene_added");
+}
 
 /**
  * Envoi / retrait d'une image (pièce ou logo). Sous /admin pour recevoir le cookie de session.
@@ -37,12 +92,14 @@ export async function POST(request: Request) {
   const operation = form.get("operation");
   const slug = String(form.get("slug") ?? "");
 
+  if (target === "scene") return handleScene(form, slug, operation);
+
   let key: string;
   let back: string;
   if (target === "logo") {
     key = "logo";
     back = "/admin/contenu";
-  } else if (target === "product" && /^[a-z0-9-]{1,80}$/.test(slug)) {
+  } else if (target === "product" && SLUG.test(slug)) {
     key = `product-${slug}`;
     back = "/admin/produits";
   } else {
@@ -66,23 +123,10 @@ export async function POST(request: Request) {
     return done("image_removed");
   }
 
-  const file = form.get("file");
-  if (!(file instanceof File) || file.size === 0) return fail("image_missing");
-  if (file.size > MAX_IMAGE_BYTES) return fail("image_size");
-  if (!isMediaConfigured()) return fail("image_storage");
-  const data = Buffer.from(await file.arrayBuffer());
-  const type = sniffImage(data);
-  if (!type) return fail("image_type");
-
   const previous = await currentUrl();
-  let url: string;
-  try {
-    url = await uploadMedia(key, type, data);
-  } catch (error) {
-    console.error("Envoi d'image impossible", error);
-    return fail("image_storage");
-  }
-  await apply(url);
+  const uploaded = await uploadFromForm(form, key);
+  if ("error" in uploaded) return fail(uploaded.error);
+  await apply(uploaded.url);
   await deleteMediaByUrl(previous);
   revalidatePath("/", "layout");
   return done("image_saved");

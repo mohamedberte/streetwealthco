@@ -17,7 +17,7 @@ applyTo: "src/server/**,src/app/**/actions.ts,src/app/**/content-actions.ts,src/
 - Les prix, noms et tailles d'une commande sont toujours recalcules cote serveur depuis le catalogue (`src/server/catalog.ts`), jamais lus depuis le client.
 
 ## Fichiers et medias
-- Upload : liste blanche PNG/JPEG/WebP, type verifie sur les octets (`sniffImage`), taille plafonnee, cle de media validee par regex. Jamais de SVG ni de HTML.
+- Upload : liste blanche PNG/JPEG/WebP, type verifie sur les octets (`sniffImage`), taille plafonnee, cle de media validee par regex (`logo`, `product-<slug>`, `scene-<slug>`). Les images des looks suivent les memes controles et le nombre de looks par piece est plafonne (`MAX_SCENES`). Jamais de SVG ni de HTML.
 - Les medias sont servis par CloudFront depuis un bucket S3 prive (OAC, pas d'ACL publique). Le compte IAM du site est limite a `PutObject`/`DeleteObject` sur le prefixe `media/`. Cles `S3_*` uniquement en variables d'environnement, jamais journalisees (ne logger que le statut des erreurs S3). Les objets ont une cle versionnee (cache immuable) ; la suppression ne vise que les cles valides par regex.
 
 ## Secrets et donnees personnelles
