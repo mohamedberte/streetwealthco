@@ -1,12 +1,20 @@
 import "server-only";
 import { brand } from "@/lib/brand";
-import { getProduct, formatPrice } from "@/lib/products";
+import { formatPrice } from "@/lib/products";
+import { getAnyProduct } from "./catalog";
 import { zones } from "@/lib/shipping";
 import { sendMail } from "./mail";
 import type { Order } from "./orders";
+import { unsubscribeToken } from "./unsubscribe";
 
 export function siteUrl() {
-  return (process.env.SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  const url = process.env.SITE_URL;
+  if (!url) {
+    // En production, une URL absente enverrait les clients vers localhost : on échoue explicitement.
+    if (process.env.NODE_ENV === "production") throw new Error("SITE_URL manquante.");
+    return "http://localhost:3000";
+  }
+  return url.replace(/\/$/, "");
 }
 
 const escape = (value: string) =>
@@ -65,15 +73,28 @@ export async function sendShippedEmail(order: Order) {
 }
 
 export async function sendRestockEmail(email: string, slug: string, size: string) {
-  const product = getProduct(slug);
+  const product = await getAnyProduct(slug);
   if (!product) return;
+  const unsubscribe = `${siteUrl()}/api/waitlist/unsubscribe?e=${encodeURIComponent(email)}&p=${encodeURIComponent(slug)}&s=${encodeURIComponent(size)}&t=${unsubscribeToken(email, slug, size)}`;
   await sendMail({
     to: email,
     subject: `${product.name} — taille ${size} de nouveau disponible`,
     html: layout(
       "De nouveau disponible",
       `<p style="font-size:14px;">${escape(product.name)} en taille ${escape(size)} est de nouveau disponible. Les pièces sont attribuées dans l'ordre d'inscription, dans la limite du stock.</p>
-<p style="margin:24px 0 0;"><a href="${siteUrl()}/?piece=${product.slug}" style="color:#A9844F;">Voir la pièce</a></p>`,
+<p style="margin:24px 0 0;"><a href="${siteUrl()}/?piece=${product.slug}" style="color:#A9844F;">Voir la pièce</a></p>
+<p style="margin:24px 0 0;font-size:11px;color:#75685D;"><a href="${unsubscribe}" style="color:#75685D;">Ne plus recevoir cette alerte</a></p>`,
+    ),
+  });
+}
+
+export async function sendRefundEmail(order: Order) {
+  await sendMail({
+    to: order.email,
+    subject: `Commande ${order.number} remboursée`,
+    html: layout(
+      "Remboursement effectué",
+      `<p style="font-size:14px;">Bonjour ${escape(order.name)}, votre commande ${order.number} a été intégralement remboursée (${formatPrice(order.total)}). Le montant est crédité sur votre moyen de paiement d'origine sous 5 à 10 jours ouvrés, selon votre banque.</p>`,
     ),
   });
 }
@@ -99,7 +120,7 @@ export async function sendRefundNeededNotification(order: Order) {
     subject: `Remboursement à effectuer — ${order.number}`,
     html: layout(
       `Remboursement à effectuer`,
-      `<p style="font-size:14px;">Le paiement de ${order.number} (${formatPrice(order.total)}) est arrivé alors que le stock n'était plus disponible. Rembourser le client depuis le tableau de bord Stripe, puis annuler la commande dans l'espace admin.</p>`,
+      `<p style="font-size:14px;">Le paiement de ${order.number} (${formatPrice(order.total)}) est arrivé alors que le stock n'était plus disponible. Rembourser le client depuis l'espace admin (bouton Rembourser) : le remboursement Stripe et le statut de la commande sont mis à jour ensemble.</p>`,
     ),
   });
 }

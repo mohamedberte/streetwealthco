@@ -7,8 +7,8 @@ const MAX_AGE = 60 * 60 * 8; // 8 heures
 
 function secret() {
   const value = process.env.ADMIN_SESSION_SECRET;
-  if (!value || value.length < 16) {
-    throw new Error("ADMIN_SESSION_SECRET manquante ou trop courte (16 caractères minimum).");
+  if (!value || value.length < 32) {
+    throw new Error("ADMIN_SESSION_SECRET manquante ou trop courte (32 caractères minimum).");
   }
   return value;
 }

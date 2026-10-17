@@ -9,12 +9,10 @@ import { Garment } from "@/components/Garment";
 import { InfoPanel } from "@/components/InfoPanel";
 import { Logo } from "@/components/Logo";
 import { Reserve } from "@/components/Reserve";
-import { brand } from "@/lib/brand";
-import { editionTotal, formatPrice, isLimited, products } from "@/lib/products";
+import { editionTotal, formatPrice, isLimited, type Product } from "@/lib/products";
 
 export type Availability = Record<string, Record<string, number>>;
 
-const COUNT = products.length;
 const LOCK_MS = 1250;
 
 const pad = (n: number) => String(n + 1).padStart(2, "0");
@@ -24,12 +22,22 @@ const wordSize = (word: string) =>
   `min(${Math.min(22, 148 / word.length).toFixed(1)}vw, 36svh)`;
 
 export function Exhibition({
+  products,
   availability,
   initialSlug,
+  pages,
+  tagline,
+  logoUrl,
 }: {
+  /** Catalogue actif (non vide), dans l'ordre d'affichage. */
+  products: Product[];
   availability: Availability;
   initialSlug?: string;
+  pages: { slug: string; title: string }[];
+  tagline: string;
+  logoUrl?: string | null;
 }) {
+  const COUNT = products.length;
   const initialIndex = Math.max(
     0,
     products.findIndex((product) => product.slug === initialSlug),
@@ -181,7 +189,7 @@ export function Exhibition({
         { y: 0, autoAlpha: 1, stagger: 0.07, duration: 0.8, ease: "power3.out" },
         0.75,
       );
-  }, []);
+  }, [products, COUNT]);
 
   const next = useCallback(() => go(indexRef.current + 1, 1), [go]);
   const prev = useCallback(() => go(indexRef.current - 1, -1), [go]);
@@ -322,7 +330,7 @@ export function Exhibition({
       window.removeEventListener("pointercancel", onUp);
       window.removeEventListener("keydown", onKey);
     };
-  }, [go, next, prev]);
+  }, [go, next, prev, COUNT]);
 
   const first = products[initialIndex].tone;
 
@@ -337,10 +345,10 @@ export function Exhibition({
       <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between px-6 pt-6 sm:px-10 sm:pt-8">
         <div className="pointer-events-auto">
           <h1 className="m-0">
-            <Logo className="text-4xl sm:text-5xl" />
+            <Logo className="text-4xl sm:text-5xl" imageUrl={logoUrl} />
           </h1>
           <p className="mt-2 hidden max-w-[17rem] text-[10px] uppercase leading-relaxed tracking-[0.26em] opacity-60 sm:block">
-            {brand.tagline}
+            {tagline}
           </p>
         </div>
         <div className="pointer-events-auto flex items-center gap-6 pt-2 text-[11px]">
@@ -520,7 +528,7 @@ export function Exhibition({
         <span className="w-24 sm:hidden" aria-hidden />
       </nav>
 
-      <InfoPanel open={infoOpen} onClose={() => setInfoOpen(false)} />
+      <InfoPanel open={infoOpen} onClose={() => setInfoOpen(false)} pages={pages} />
     </main>
   );
 }
@@ -530,7 +538,7 @@ function Gauge({
   product,
   avail,
 }: {
-  product: (typeof products)[number];
+  product: Product;
   avail?: Record<string, number>;
 }) {
   if (!avail) return null;

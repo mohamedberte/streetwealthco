@@ -2,9 +2,17 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import { legalPages } from "@/lib/legal";
 
-export function InfoPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
+/** Menu compact ancré sous le bouton « Informations » : la scène reste visible. */
+export function InfoPanel({
+  open,
+  onClose,
+  pages,
+}: {
+  open: boolean;
+  onClose: () => void;
+  pages: { slug: string; title: string }[];
+}) {
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
@@ -17,37 +25,38 @@ export function InfoPanel({ open, onClose }: { open: boolean; onClose: () => voi
   if (!open) return null;
 
   return (
-    <div
-      data-nodrag
-      className="fixed inset-0 z-50 bg-brown text-ivory"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Informations"
-    >
-      <div className="flex items-center justify-between px-6 pt-6 sm:px-10 sm:pt-8">
-        <p className="text-[11px] uppercase tracking-[0.28em]">Informations</p>
-        <button
-          type="button"
-          onClick={onClose}
-          className="text-[11px] uppercase tracking-[0.24em] text-ivory/60 hover:text-ivory"
-        >
-          Fermer
-        </button>
-      </div>
-      <nav className="flex h-[calc(100%-5rem)] flex-col justify-center px-6 sm:px-10">
-        <ul className="space-y-1">
-          {legalPages.map((page) => (
+    <>
+      <div data-nodrag aria-hidden className="fixed inset-0 z-40" onClick={onClose} />
+      <div
+        data-nodrag
+        className="fixed right-6 top-[4.5rem] z-50 w-[min(18rem,calc(100vw-3rem))] border border-ivory/15 bg-brown p-5 text-ivory shadow-xl sm:right-10 sm:top-24"
+        role="dialog"
+        aria-label="Informations"
+      >
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] uppercase tracking-[0.28em] text-ivory/60">Informations</p>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fermer"
+            className="text-sm leading-none text-ivory/60 hover:text-ivory"
+          >
+            ✕
+          </button>
+        </div>
+        <ul className="mt-3 divide-y divide-ivory/10">
+          {pages.map((page) => (
             <li key={page.slug}>
               <Link
                 href={`/infos/${page.slug}`}
-                className="block py-1.5 font-serif text-3xl text-ivory/80 transition-colors hover:text-gold sm:text-5xl"
+                className="block py-2 text-sm text-ivory/85 transition-colors hover:text-gold"
               >
                 {page.title}
               </Link>
             </li>
           ))}
         </ul>
-      </nav>
-    </div>
+      </div>
+    </>
   );
 }

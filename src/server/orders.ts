@@ -1,6 +1,6 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
-import { getProduct } from "@/lib/products";
+import { getProduct, type CatalogProduct } from "./catalog";
 import { policy, zones, type ZoneId } from "@/lib/shipping";
 import { query, transaction, type Queryable } from "./db";
 import {
@@ -21,7 +21,8 @@ export type OrderStatus =
   | "delivered"
   | "cancelled"
   | "expired"
-  | "refund_needed";
+  | "refund_needed"
+  | "refunded";
 
 export type OrderItem = {
   slug: string;
@@ -50,6 +51,8 @@ export type OrderRow = {
   shipping: number;
   total: number;
   tracking: string | null;
+  refund_ref: string | null;
+  refunded_at: Date | null;
   expires_at: Date | null;
   created_at: Date;
 };
@@ -76,13 +79,15 @@ export class OrderError extends Error {
 }
 
 /** Fusionne les doublons, vérifie les pièces/tailles et plafonne les quantités. */
-function normalize(items: NewOrder["items"]): StockLine[] {
+async function normalize(items: NewOrder["items"]) {
   const map = new Map<string, StockLine>();
+  const catalog = new Map<string, CatalogProduct>();
   for (const item of items) {
-    const product = getProduct(item.slug);
+    const product = catalog.get(item.slug) ?? (await getProduct(item.slug));
     if (!product || !product.sizes.includes(item.size)) {
       throw new OrderError("Une pièce de la sélection est inconnue.");
     }
+    catalog.set(item.slug, product);
     const key = `${item.slug}:${item.size}`;
     const quantity = Math.min(
       (map.get(key)?.quantity ?? 0) + item.quantity,
@@ -90,15 +95,15 @@ function normalize(items: NewOrder["items"]): StockLine[] {
     );
     map.set(key, { slug: item.slug, size: item.size, quantity });
   }
-  return [...map.values()];
+  return { lines: [...map.values()], catalog };
 }
 
 export async function createOrder(input: NewOrder) {
-  const lines = normalize(input.items);
+  const { lines, catalog } = await normalize(input.items);
   if (lines.length === 0) throw new OrderError("La sélection est vide.");
 
   const subtotal = lines.reduce(
-    (sum, line) => sum + (getProduct(line.slug)?.price ?? 0) * line.quantity,
+    (sum, line) => sum + (catalog.get(line.slug)?.price ?? 0) * line.quantity,
     0,
   );
   const shipping = zones[input.zone].fee;
@@ -139,7 +144,7 @@ export async function createOrder(input: NewOrder) {
     const id = inserted[0].id;
 
     for (const line of lines) {
-      const product = getProduct(line.slug)!;
+      const product = catalog.get(line.slug)!;
       await q.query(
         `insert into order_items (order_id, slug, name, size, quantity, unit_price)
          values ($1,$2,$3,$4,$5,$6)`,
@@ -183,12 +188,106 @@ export async function setPaymentRef(id: number, ref: string) {
   await query(`update orders set payment_ref = $2 where id = $1`, [id, ref]);
 }
 
-export async function listOrders(limit = 60) {
-  const rows = await query<OrderRow>(
-    `select * from orders order by created_at desc limit $1`,
-    [limit],
-  );
+export async function listOrders(limit = 60, status?: OrderStatus) {
+  const rows = status
+    ? await query<OrderRow>(
+        `select * from orders where status = $2 order by created_at desc limit $1`,
+        [limit, status],
+      )
+    : await query<OrderRow>(`select * from orders order by created_at desc limit $1`, [limit]);
   return hydrate(rows);
+}
+
+const SOLD_PLAIN = `payment_status = 'paid' and status in ('confirmed', 'shipped', 'delivered')`;
+const SOLD = `o.payment_status = 'paid' and o.status in ('confirmed', 'shipped', 'delivered')`;
+
+export type Stats = {
+  paidOrders: number;
+  revenue: number;
+  revenue7d: number;
+  revenue30d: number;
+  toShip: number;
+  refundNeeded: number;
+  pending: number;
+  refundedCount: number;
+  refundedTotal: number;
+  byProduct: { slug: string; name: string; qty: number; revenue: number }[];
+};
+
+/** Indicateurs du tableau de bord (montants TTC, livraison comprise). */
+export async function dashboardStats(): Promise<Stats> {
+  const [totals, byProduct] = await Promise.all([
+    query<{
+      paid_orders: number;
+      revenue: number;
+      revenue_7d: number;
+      revenue_30d: number;
+      to_ship: number;
+      refund_needed: number;
+      pending: number;
+      refunded_count: number;
+      refunded_total: number;
+    }>(
+      `select
+         count(*) filter (where ${SOLD_PLAIN})::int as paid_orders,
+         coalesce(sum(total) filter (where ${SOLD_PLAIN}), 0)::int as revenue,
+         coalesce(sum(total) filter (where ${SOLD_PLAIN} and created_at > now() - interval '7 days'), 0)::int as revenue_7d,
+         coalesce(sum(total) filter (where ${SOLD_PLAIN} and created_at > now() - interval '30 days'), 0)::int as revenue_30d,
+         count(*) filter (where status = 'confirmed')::int as to_ship,
+         count(*) filter (where status = 'refund_needed')::int as refund_needed,
+         count(*) filter (where status = 'pending_payment')::int as pending,
+         count(*) filter (where status = 'refunded')::int as refunded_count,
+         coalesce(sum(total) filter (where status = 'refunded'), 0)::int as refunded_total
+       from orders`,
+    ),
+    query<{ slug: string; name: string; qty: number; revenue: number }>(
+      `select oi.slug, oi.name, sum(oi.quantity)::int as qty,
+              sum(oi.quantity * oi.unit_price)::int as revenue
+         from order_items oi join orders o on o.id = oi.order_id
+        where ${SOLD}
+        group by oi.slug, oi.name
+        order by qty desc`,
+    ),
+  ]);
+  const t = totals[0];
+  return {
+    paidOrders: t.paid_orders,
+    revenue: t.revenue,
+    revenue7d: t.revenue_7d,
+    revenue30d: t.revenue_30d,
+    toShip: t.to_ship,
+    refundNeeded: t.refund_needed,
+    pending: t.pending,
+    refundedCount: t.refunded_count,
+    refundedTotal: t.refunded_total,
+    byProduct,
+  };
+}
+
+/**
+ * Marque une commande comme remboursée (le remboursement Stripe est déjà fait).
+ * Remet les pièces en stock si demandé (retour physique) et retourne les lignes remises.
+ */
+export async function markRefunded(id: number, refundRef: string, restockItems: boolean) {
+  return transaction(async (q): Promise<StockLine[]> => {
+    const order = await lockedOrder(q, id);
+    if (!order || order.status === "refunded") return [];
+
+    const lines = await q.query<StockLine>(
+      `select slug, size, quantity from order_items where order_id = $1`,
+      [id],
+    );
+    const physical = ["confirmed", "shipped", "delivered"].includes(order.status);
+    const restocked = restockItems && physical;
+    if (restocked) await restock(q, lines);
+
+    await q.query(
+      `update orders set status = 'refunded', refund_ref = $2, refunded_at = now(),
+              updated_at = now() where id = $1`,
+      [id, refundRef],
+    );
+    return restocked ? lines : [];
+  });
 }
 
 export type PayResult = "paid" | "already" | "refund_needed" | "mismatch" | "not_found";

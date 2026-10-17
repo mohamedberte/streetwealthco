@@ -10,6 +10,35 @@ export async function addToWaitlist(slug: string, size: string, email: string) {
   );
 }
 
+export type WaitlistEntry = {
+  id: number;
+  slug: string;
+  size: string;
+  email: string;
+  created_at: Date;
+  notified_at: Date | null;
+};
+
+export async function waitlistEntries() {
+  return query<WaitlistEntry>(
+    `select id, slug, size, email, created_at, notified_at from waitlist
+      order by slug, size, created_at`,
+  );
+}
+
+export async function removeWaitlistEntry(id: number) {
+  await query(`delete from waitlist where id = $1`, [id]);
+}
+
+/** Désinscription par le client (lien signé dans l'e-mail). */
+export async function unsubscribeFromWaitlist(slug: string, size: string, email: string) {
+  await query(`delete from waitlist where slug = $1 and size = $2 and email = $3`, [
+    slug,
+    size,
+    email.toLowerCase(),
+  ]);
+}
+
 export async function waitlistCounts(): Promise<Record<string, number>> {
   const rows = await query<{ slug: string; size: string; n: number }>(
     `select slug, size, count(*)::int as n from waitlist where notified_at is null group by slug, size`,

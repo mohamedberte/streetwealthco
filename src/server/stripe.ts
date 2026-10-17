@@ -68,6 +68,49 @@ export async function createCheckoutSession(params: {
 
 export type Verification = { paid: boolean; amountEur: number };
 
+/**
+ * Rembourse intégralement le paiement d'une session Checkout. Idempotent côté
+ * Stripe (clé d'idempotence par commande). Retourne l'identifiant du remboursement.
+ */
+export async function refundPayment(sessionId: string, number: string) {
+  const sessionResponse = await fetch(`${API}/checkout/sessions/${encodeURIComponent(sessionId)}`, {
+    headers: { Authorization: `Bearer ${secret()}` },
+    cache: "no-store",
+  });
+  const session = (await sessionResponse.json()) as {
+    payment_intent?: string | null;
+    error?: { message?: string };
+  };
+  if (!sessionResponse.ok || !session.payment_intent) {
+    throw new Error(session.error?.message ?? "Paiement introuvable chez Stripe.");
+  }
+
+  const body = new URLSearchParams();
+  body.set("payment_intent", session.payment_intent);
+  body.set("reason", "requested_by_customer");
+  body.set("metadata[order]", number);
+
+  const response = await fetch(`${API}/refunds`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${secret()}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Idempotency-Key": `refund-${number}`,
+    },
+    body,
+  });
+  const json = (await response.json()) as {
+    id?: string;
+    error?: { message?: string; code?: string };
+  };
+  // Déjà remboursé (par exemple depuis le tableau de bord Stripe) : on réconcilie.
+  if (json.error?.code === "charge_already_refunded") return "deja_rembourse";
+  if (!response.ok || !json.id) {
+    throw new Error(json.error?.message ?? "Remboursement impossible.");
+  }
+  return json.id;
+}
+
 export async function verifySession(sessionId: string): Promise<Verification> {
   const response = await fetch(`${API}/checkout/sessions/${encodeURIComponent(sessionId)}`, {
     headers: { Authorization: `Bearer ${secret()}` },

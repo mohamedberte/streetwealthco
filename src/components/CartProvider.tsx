@@ -6,10 +6,13 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
-import { getProduct } from "@/lib/products";
 import { policy } from "@/lib/shipping";
+
+/** Pièces commandables, fournies par le serveur (prix et tailles à jour). */
+export type CartCatalogEntry = { slug: string; name: string; price: number; sizes: string[] };
 
 export type CartItem = {
   slug: string;
@@ -34,7 +37,14 @@ type CartContextValue = {
 const CartContext = createContext<CartContextValue | null>(null);
 const STORAGE_KEY = "triplex-cart";
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+export function CartProvider({
+  catalog,
+  children,
+}: {
+  catalog: CartCatalogEntry[];
+  children: React.ReactNode;
+}) {
+  const catalogRef = useRef(catalog);
   const [items, setItems] = useState<CartItem[]>([]);
   const [open, setOpen] = useState(false);
   const [ready, setReady] = useState(false);
@@ -47,7 +57,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         // Ignore les pièces/tailles qui n'existent plus et recale les prix.
         setItems(
           stored.flatMap((item) => {
-            const product = getProduct(item.slug);
+            const product = catalogRef.current.find((entry) => entry.slug === item.slug);
             if (!product || !product.sizes.includes(item.size)) return [];
             return [
               {

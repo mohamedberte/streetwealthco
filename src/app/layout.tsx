@@ -3,6 +3,7 @@ import { Bebas_Neue, Cormorant_Garamond, Outfit } from "next/font/google";
 import { CartDrawer } from "@/components/CartDrawer";
 import { CartProvider } from "@/components/CartProvider";
 import { brand } from "@/lib/brand";
+import { getCatalog } from "@/server/catalog";
 import "./globals.css";
 
 const sans = Outfit({
@@ -44,14 +45,20 @@ export const viewport: Viewport = {
   themeColor: "#24150F",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const catalog = (await getCatalog()).map(({ slug, name, price, sizes }) => ({
+    slug,
+    name,
+    price,
+    sizes,
+  }));
   return (
     <html
       lang="fr"
       className={`${sans.variable} ${serif.variable} ${display.variable} h-full antialiased`}
     >
       <body className="h-full font-sans">
-        <CartProvider>
+        <CartProvider catalog={catalog}>
           {children}
           <CartDrawer />
         </CartProvider>

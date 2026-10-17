@@ -8,8 +8,10 @@
 - Tone: refined, editorial, understated luxury streetwear. French-first copy.
 - Palette (Tailwind tokens): cream `#E8D8C0`, ivory `#F3EBDD`, brown `#24150F`, brown-soft `#5C493D`, gold `#A9844F`, border `#CDBB9F`, muted `#75685D`, white `#FAF8F3`.
 - Gold is accent only. Do not use bright colors or playful UI.
-- Donnees des pieces: `src/lib/products.ts` (champ `image` optionnel pour une photo reelle).
+- Donnees des pieces: la base Postgres fait foi (table `products`, gerees dans `/admin/produits`) ; `src/lib/products.ts` ne contient que les valeurs par defaut. Acces via `src/server/catalog.ts`. Meme principe pour les pages Informations (`src/server/content.ts`, defauts dans `src/lib/legal.ts`), l'accroche et le logo. Photos et logo: bucket S3 prive + CloudFront (`src/server/media.ts`, SigV4 sans SDK, variables `S3_*` et `CLOUDFRONT_URL`), URL stockee en base.
 - Prefer server components. Keep client components minimal.
 - Do not commit secrets. Use `.env.local` for local keys.
 - Boutique (vente en France / UE): prix en EUR TTC, stock par taille en base Postgres (src/server), paiement par carte via Stripe Checkout (webhook), commande invite, livraison France + UE (src/lib/shipping.ts), droit de retractation 14 jours. Textes legaux dans src/lib/legal.ts, infos societe dans src/lib/brand.ts. Voir SETUP.md.
 - Police Bebas Neue reservee au logo (composant Logo).
+- Controles permanents: avant de livrer, lancer `/pre-release-check` ; apres toute modification de l'admin, du paiement, des uploads, du SQL ou des en-tetes, lancer `/security-audit`. Agents: Security Auditor, Release Reviewer. Regles detaillees dans `.github/instructions/`.
+- Next.js a des changements incompatibles : lire `node_modules/next/dist/docs/` avant d'utiliser une API peu connue (voir AGENTS.md).

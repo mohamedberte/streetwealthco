@@ -1,5 +1,5 @@
 import "server-only";
-import { products } from "@/lib/products";
+import { getCatalog } from "./catalog";
 import { query, transaction, type Queryable } from "./db";
 
 export type Availability = Record<string, Record<string, number>>;
@@ -43,7 +43,7 @@ export async function getAvailability(): Promise<Availability> {
   );
 
   const result: Availability = {};
-  for (const product of products) {
+  for (const product of await getCatalog()) {
     result[product.slug] = {};
     for (const size of product.sizes) result[product.slug][size] = 0;
   }

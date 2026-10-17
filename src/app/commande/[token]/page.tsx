@@ -59,8 +59,12 @@ export default async function OrderPage({ params }: Props) {
     headline = "Commande annulée";
     message = "Cette commande a été annulée.";
   } else if (refund) {
-    headline = "Paiement reçu — vérification en cours";
-    message = `Votre paiement a bien été reçu, mais une pièce n'est plus disponible. Nous vous remboursons intégralement : contactez-nous à ${brand.email} avec votre numéro de commande.`;
+    headline = "Paiement reçu — remboursement en cours";
+    message = `Votre paiement a bien été reçu, mais une pièce n'est plus disponible. Nous vous remboursons intégralement et vous prévenons par e-mail. Une question : ${brand.email}, avec votre numéro de commande.`;
+  } else if (order.status === "refunded") {
+    headline = "Commande remboursée";
+    message =
+      "Cette commande a été intégralement remboursée sur votre moyen de paiement d'origine (5 à 10 jours ouvrés selon votre banque).";
   } else if (order.status === "confirmed") {
     message = "Paiement reçu. Nous préparons votre commande.";
   }

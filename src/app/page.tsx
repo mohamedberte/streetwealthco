@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Exhibition, type Availability } from "@/components/Exhibition";
+import { PageShell } from "@/components/PageShell";
 import { brand } from "@/lib/brand";
-import { getProduct, products } from "@/lib/products";
+import type { Product } from "@/lib/products";
+import { getCatalog, getProduct } from "@/server/catalog";
+import { getPages, getSettings } from "@/server/content";
 import { getAvailability } from "@/server/inventory";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +16,7 @@ function pieceParam(value: string | string[] | undefined) {
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-  const piece = getProduct(pieceParam((await searchParams).piece) ?? "");
+  const piece = await getProduct(pieceParam((await searchParams).piece) ?? "");
   if (!piece) return {};
   return {
     title: piece.name,
@@ -22,7 +25,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 }
 
 /** Sans base de données (développement), on affiche le stock initial. */
-async function loadAvailability(): Promise<Availability> {
+async function loadAvailability(products: Product[]): Promise<Availability> {
   try {
     return await getAvailability();
   } catch (error) {
@@ -37,8 +40,31 @@ async function loadAvailability(): Promise<Availability> {
 }
 
 export default async function Home({ searchParams }: Props) {
-  const [params, availability] = await Promise.all([searchParams, loadAvailability()]);
+  const [params, products, pages, settings] = await Promise.all([
+    searchParams,
+    getCatalog(),
+    getPages(),
+    getSettings(),
+  ]);
+
+  if (products.length === 0) {
+    return (
+      <PageShell>
+        <h1 className="font-serif text-4xl sm:text-6xl">Bientôt.</h1>
+        <p className="mt-6 text-sm text-brown-soft">{settings.tagline}</p>
+      </PageShell>
+    );
+  }
+
+  const availability = await loadAvailability(products);
   return (
-    <Exhibition availability={availability} initialSlug={pieceParam(params.piece)} />
+    <Exhibition
+      products={products}
+      availability={availability}
+      initialSlug={pieceParam(params.piece)}
+      pages={pages.map(({ slug, title }) => ({ slug, title }))}
+      tagline={settings.tagline}
+      logoUrl={settings.logoUrl}
+    />
   );
 }

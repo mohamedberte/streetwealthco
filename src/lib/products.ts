@@ -6,6 +6,16 @@ export type GarmentKind =
   | "pants"
   | "cap";
 
+/** Silhouettes disponibles pour l'illustration vectorielle. */
+export const garmentKinds: GarmentKind[] = [
+  "hoodie-cropped",
+  "hoodie-oversized",
+  "tee",
+  "crewneck",
+  "pants",
+  "cap",
+];
+
 export type Tone = {
   /** Fond de la scène */
   bg: string;
@@ -30,7 +40,7 @@ export type Product = {
   fabric: string;
   edition: string;
   sizes: string[];
-  /** Stock initial par taille (utilisé uniquement pour initialiser la base). */
+  /** Stock initial par taille (sert aussi à calculer la taille de l'édition). */
   stockPerSize: number;
   kind: GarmentKind;
   tone: Tone;
@@ -141,10 +151,6 @@ export const products: Product[] = [
     },
   },
 ];
-
-export function getProduct(slug: string) {
-  return products.find((product) => product.slug === slug);
-}
 
 /** Édition limitée = toute pièce dont l'édition n'est pas « Permanente ». */
 export function isLimited(product: Product) {

@@ -57,4 +57,57 @@ create table if not exists waitlist (
   notified_at timestamptz,
   unique (slug, size, email)
 );
+
+-- Journal pseudonymise pour la limitation de debit (adresses hachees, purge automatique).
+create table if not exists rate_events (
+  id bigserial primary key,
+  bucket text not null,
+  key text not null,
+  at timestamptz not null default now()
+);
+
+create index if not exists rate_events_idx on rate_events (bucket, key, at);
+
+alter table orders add column if not exists refund_ref text;
+alter table orders add column if not exists refunded_at timestamptz;
+
+-- Contenu gere depuis l'admin. Une ligne remplace la valeur par defaut du code (meme slug).
+create table if not exists products (
+  slug text primary key,
+  position integer not null default 0,
+  name text not null,
+  word text not null,
+  silhouette text not null,
+  price integer not null check (price >= 0),
+  description text not null default '',
+  fabric text not null default '',
+  edition text not null default '',
+  sizes text not null,
+  stock_per_size integer not null default 0,
+  kind text not null,
+  tone_bg text not null,
+  tone_ink text not null,
+  tone_fill text not null,
+  tone_line text not null,
+  tone_accent text,
+  image text,
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists site_pages (
+  slug text primary key,
+  title text not null,
+  intro text not null default '',
+  content text not null default '',
+  position integer not null default 0,
+  active boolean not null default true,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists site_settings (
+  key text primary key,
+  value text not null
+);
 `;

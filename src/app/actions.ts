@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { getProduct } from "@/lib/products";
+import { getAnyProduct, getProduct } from "@/server/catalog";
 import { policy, zoneIds, zones, type ZoneId } from "@/lib/shipping";
 import { siteUrl } from "@/server/emails";
 import { SoldOutError } from "@/server/inventory";
@@ -13,6 +13,7 @@ import {
   setPaymentRef,
 } from "@/server/orders";
 import { createCheckoutSession, stripeConfigured } from "@/server/stripe";
+import { clientKey, hashKey, isLimited, recordEvent } from "@/server/rate-limit";
 import { addToWaitlist } from "@/server/waitlist";
 
 export type ActionResult =
@@ -60,6 +61,18 @@ export async function placeOrder(raw: unknown): Promise<ActionResult> {
     return { ok: false, error: "Le paiement en ligne n'est pas encore activé." };
   }
 
+  // Anti-abus : une commande réserve du stock 30 minutes, on limite donc les créations.
+  const ipKey = await clientKey();
+  const emailKey = hashKey(data.email.toLowerCase());
+  if (
+    (await isLimited("order-ip", ipKey, 8, 3600)) ||
+    (await isLimited("order-email", emailKey, 5, 3600))
+  ) {
+    return { ok: false, error: "Trop de tentatives. Réessayez dans une heure." };
+  }
+  await recordEvent("order-ip", ipKey);
+  await recordEvent("order-email", emailKey);
+
   let created: { id: number; number: string; token: string; total: number };
   try {
     created = await createOrder({
@@ -75,7 +88,7 @@ export async function placeOrder(raw: unknown): Promise<ActionResult> {
     });
   } catch (error) {
     if (error instanceof SoldOutError) {
-      const product = getProduct(error.slug);
+      const product = await getAnyProduct(error.slug);
       return {
         ok: false,
         error: `${product?.name ?? "Une pièce"} (taille ${error.size}) n'est plus disponible.`,
@@ -131,11 +144,16 @@ export async function joinWaitlist(raw: unknown): Promise<{ ok: boolean; error?:
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Informations invalides." };
   }
   const { slug, size, email } = parsed.data;
-  const product = getProduct(slug);
+  const product = await getProduct(slug);
   if (!product || !product.sizes.includes(size)) {
     return { ok: false, error: "Pièce inconnue." };
   }
   try {
+    const ipKey = await clientKey();
+    if (await isLimited("waitlist-ip", ipKey, 10, 3600)) {
+      return { ok: false, error: "Trop de demandes. Réessayez plus tard." };
+    }
+    await recordEvent("waitlist-ip", ipKey);
     await addToWaitlist(slug, size, email);
     return { ok: true };
   } catch (error) {
