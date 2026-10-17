@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { placeOrder } from "@/app/actions";
 import { checkoutProfile } from "@/app/compte/actions";
+import { AddressInput } from "@/components/AddressInput";
 import { useCart } from "@/components/CartProvider";
+import { ACCOUNT_OFFER_KEY } from "@/lib/account-offer";
 import { formatPrice } from "@/lib/products";
 import { zoneIds, zones, type ZoneId } from "@/lib/shipping";
 
@@ -18,6 +20,7 @@ export function Checkout({ onBack }: { onBack: () => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [account, setAccount] = useState(false);
+  const [createAccount, setCreateAccount] = useState(true);
   const formRef = useRef<HTMLFormElement>(null);
 
   // Client connecté : coordonnées de sa dernière commande (sans écraser ce qui est déjà saisi).
@@ -47,6 +50,17 @@ export function Checkout({ onBack }: { onBack: () => void }) {
   }, []);
   const shipping = zones[zone].fee;
 
+  function fillAddress(suggestion: { address: string; postalCode: string; city: string }) {
+    const form = formRef.current;
+    if (!form) return;
+    const set = (name: string, value: string) => {
+      const element = form.elements.namedItem(name);
+      if (element instanceof HTMLInputElement) element.value = value;
+    };
+    set("address", suggestion.address);
+    set("postalCode", suggestion.postalCode);
+    set("city", suggestion.city);
+  }
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -77,6 +91,14 @@ export function Checkout({ onBack }: { onBack: () => void }) {
     }
 
     // Redirection vers la page de paiement sécurisée Stripe.
+    // Le code de connexion sera envoyé au retour, une fois le paiement confirmé.
+    try {
+      if (!account && createAccount) {
+        sessionStorage.setItem(ACCOUNT_OFFER_KEY, String(form.get("email") ?? "").trim().toLowerCase());
+      } else {
+        sessionStorage.removeItem(ACCOUNT_OFFER_KEY);
+      }
+    } catch {}
     window.location.assign(result.redirect);
   }
 
@@ -172,13 +194,7 @@ export function Checkout({ onBack }: { onBack: () => void }) {
           <label htmlFor="co-address" className={label}>
             Adresse
           </label>
-          <input
-            id="co-address"
-            name="address"
-            required
-            autoComplete="street-address"
-            className={field}
-          />
+          <AddressInput enabled={zone === "france"} className={field} onPick={fillAddress} />
         </div>
         <div className="grid gap-5 sm:grid-cols-[8rem_1fr]">
           <div>
@@ -235,6 +251,22 @@ export function Checkout({ onBack }: { onBack: () => void }) {
             , dont le droit de rétractation de 14 jours.
           </span>
         </label>
+
+        {!account && (
+          <label className="flex cursor-pointer items-start gap-3 border border-ivory/15 p-3 text-xs leading-relaxed text-ivory/75">
+            <input
+              type="checkbox"
+              checked={createAccount}
+              onChange={(event) => setCreateAccount(event.target.checked)}
+              className="mt-0.5 accent-gold"
+            />
+            <span>
+              <span className="block text-ivory">Créer mon compte pour la prochaine fois</span>
+              Suivi de mes commandes et coordonnées pré-remplies. Sans mot de passe : un code vous sera
+              envoyé par e-mail après le paiement.
+            </span>
+          </label>
+        )}
       </div>
 
       <div className="border-t border-ivory/15 px-6 py-5">

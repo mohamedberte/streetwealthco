@@ -126,11 +126,12 @@ export default async function OrderPage({ params }: Props) {
 
       {offerAccount && (
         <section className="mt-10 max-w-md border border-border bg-ivory p-5">
-          <h2 className="text-[11px] uppercase tracking-[0.26em] text-gold">Suivre mes commandes</h2>
+          <h2 className="text-[11px] uppercase tracking-[0.26em] text-gold">Créer mon compte</h2>
           <p className="mb-5 mt-3 text-sm leading-relaxed text-brown-soft">
-            Retrouvez cette commande et les suivantes dans votre compte.
+            Sans mot de passe : un code envoyé par e-mail suffit. Vous retrouverez cette commande et les
+            suivantes, et vos coordonnées seront pré-remplies.
           </p>
-          <CodeLogin defaultEmail={order.email} next={`/commande/${token}`} />
+          <CodeLogin defaultEmail={order.email} next={`/commande/${token}`} autoSend />
         </section>
       )}
 

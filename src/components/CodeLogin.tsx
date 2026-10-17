@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import gsap from "gsap";
 import { sendCode, verifyCode } from "@/app/compte/actions";
+import { ACCOUNT_OFFER_KEY } from "@/lib/account-offer";
 
 const field =
   "mt-2 block w-full border border-border bg-white px-3 py-3 text-base text-brown outline-none focus:border-brown";
@@ -19,10 +20,13 @@ export function CodeLogin({
   defaultEmail = "",
   next = "/compte",
   hint,
+  autoSend = false,
 }: {
   defaultEmail?: string;
   next?: string;
   hint?: string;
+  /** Envoie le code d'office si le client a coché « créer mon compte » pendant la commande. */
+  autoSend?: boolean;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<"email" | "code">("email");
@@ -30,6 +34,22 @@ export function CodeLogin({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!autoSend || !defaultEmail) return;
+    let wanted = false;
+    try {
+      wanted = sessionStorage.getItem(ACCOUNT_OFFER_KEY) === defaultEmail.toLowerCase();
+      if (wanted) sessionStorage.removeItem(ACCOUNT_OFFER_KEY);
+    } catch {}
+    if (!wanted) return;
+    setBusy(true);
+    sendCode(defaultEmail).then((result) => {
+      setBusy(false);
+      if (result.ok) setStep("code");
+      else setError(result.error);
+    });
+  }, [autoSend, defaultEmail]);
 
   // Chaque étape entre en glissant, élément par élément (sauf si l'animation est réduite).
   useEffect(() => {
