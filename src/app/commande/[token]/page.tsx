@@ -128,8 +128,7 @@ export default async function OrderPage({ params }: Props) {
         <section className="mt-10 max-w-md border border-border bg-ivory p-5">
           <h2 className="text-[11px] uppercase tracking-[0.26em] text-gold">Suivre mes commandes</h2>
           <p className="mb-5 mt-3 text-sm leading-relaxed text-brown-soft">
-            Activez votre compte en un code, sans mot de passe : cette commande et les suivantes y
-            seront rattachées.
+            Retrouvez cette commande et les suivantes dans votre compte.
           </p>
           <CodeLogin defaultEmail={order.email} next={`/commande/${token}`} />
         </section>

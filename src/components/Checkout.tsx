@@ -96,11 +96,10 @@ export function Checkout({ onBack }: { onBack: () => void }) {
             "Connecté : vos coordonnées sont pré-remplies."
           ) : (
             <>
-              Aucun compte n&apos;est nécessaire. Déjà client ?{" "}
+              Déjà client ?{" "}
               <a href="/compte?next=/" className="underline hover:text-ivory">
-                Se connecter en un code
+                Se connecter
               </a>
-              .
             </>
           )}
         </p>

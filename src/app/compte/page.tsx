@@ -67,20 +67,17 @@ export default async function AccountPage({ searchParams }: Props) {
       <PageShell>
         <h1 className="font-serif text-4xl">Compte</h1>
         <p className="mt-4 text-sm leading-relaxed text-brown-soft">
-          Une adresse e-mail, un code reçu par message : c&apos;est tout. Pas de mot de passe, et le
-          compte se crée tout seul la première fois. Vous retrouvez vos commandes passées avec cette
-          adresse.
+          Renseignez votre adresse e-mail : nous vous envoyons un code de connexion pour retrouver
+          vos commandes.
         </p>
         {notice}
 
         <div className="mt-8 max-w-md">
-          <CodeLogin next={next} hint="Un compte est facultatif : vous pouvez toujours commander sans." />
-          <p className="mt-2 text-xs text-muted">
-            En continuant, vous reconnaissez avoir lu la{" "}
+          <CodeLogin next={next} />
+          <p className="mt-6 text-xs text-muted">
             <Link href="/infos/confidentialite" className="underline hover:text-brown">
-              politique de confidentialité
+              Politique de confidentialité
             </Link>
-            .
           </p>
         </div>
       </PageShell>
@@ -101,18 +98,21 @@ export default async function AccountPage({ searchParams }: Props) {
         {orders.length === 0 ? (
           <p className="mt-4 text-sm text-brown-soft">Aucune commande pour le moment.</p>
         ) : (
-          <ul className="mt-4 divide-y divide-border border-y border-border">
+          <ul className="mt-4 space-y-3">
             {orders.map((order) => (
-              <li key={order.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
-                <div>
-                  <Link href={`/commande/${order.token}`} className="underline">
-                    {order.number}
-                  </Link>
-                  <p className="text-xs text-muted">
-                    {order.created_at.toLocaleDateString("fr-FR")} · {STATUS[order.status]}
-                  </p>
-                </div>
-                <span>{formatPrice(order.total)}</span>
+              <li key={order.id}>
+                <Link
+                  href={`/commande/${order.token}`}
+                  className="flex flex-wrap items-center justify-between gap-3 border border-border bg-ivory px-4 py-4 text-sm transition-colors hover:border-brown"
+                >
+                  <span>
+                    <span className="block font-serif text-lg">{order.number}</span>
+                    <span className="block text-xs text-muted">
+                      {order.created_at.toLocaleDateString("fr-FR")} · {STATUS[order.status]}
+                    </span>
+                  </span>
+                  <span>{formatPrice(order.total)}</span>
+                </Link>
               </li>
             ))}
           </ul>
