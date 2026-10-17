@@ -1,29 +1,27 @@
 export const brand = {
-  name: "StreetWealth Co.",
-  shortName: "StreetWealth",
+  name: "TRIPLEX",
   tagline: "L'expression d'un style distinctif qui transcende les frontières.",
-  city: "Paris",
-  email: "atelier@streetwealthco.com",
-  mission:
-    "StreetWealth Co. incarne l'alliance de l'opulence traditionnelle et du style urbain contemporain. Notre mission : fusionner le charme de l'old money et l'audace de la rue.",
-  visionLead:
-    "Briser les barrières entre le luxe et la rue. Le style est un langage universel ; l'opulence n'a pas à rester inaccessible.",
-  vision:
-    "Nous voyons un avenir où chacun porte le prestige à sa manière, sans compromettre son individualité — un mélange d'élégance héritée et d'audace contemporaine. La mode reflète non seulement ce que l'on possède, mais qui l'on est.",
-  offer:
-    "Offrir une mode empreinte d'élégance et de créativité, inspirée des codes du luxe classique, tout en restant accessible et authentique.",
-  values: [
-    {
-      title: "Créativité",
-      body: "Inventer des silhouettes qui parlent deux langues : l'héritage et la rue, sans pastiche ni bruit.",
-    },
-    {
-      title: "Élégance",
-      body: "Le prestige se lit dans la matière, la coupe, la retenue. L'or n'est qu'un accent.",
-    },
-    {
-      title: "Accessibilité",
-      body: "L'opulence n'est pas un club fermé. Chacun porte le prestige à sa manière.",
-    },
-  ],
+  city: "Abidjan",
+  country: "Côte d'Ivoire",
+  email: "contact@triplex.com",
+} as const;
+
+/**
+ * Informations légales de la structure (pages Mentions légales et CGV).
+ * À COMPLÉTER avec les données réelles avant la mise en ligne.
+ */
+export const company = {
+  legalName: "[Raison sociale]",
+  legalForm: "[Forme juridique : SARL, SARLU, entreprise individuelle…]",
+  rccm: "[N° RCCM]",
+  taxId: "[N° de compte contribuable]",
+  vatNumber: "[N° de TVA / identifiant OSS, si applicable]",
+  address: "[Adresse complète], Abidjan, Côte d'Ivoire",
+  phone: "[Téléphone]",
+  publisher: "[Nom du directeur de la publication]",
+  /** Adresse de retour des colis (droit de rétractation). */
+  returnAddress: "[Adresse de retour des colis]",
+  /** Médiateur de la consommation (obligatoire pour vendre à des consommateurs en France). */
+  mediator: "[Nom, adresse et site du médiateur de la consommation]",
+  host: "Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis",
 } as const;

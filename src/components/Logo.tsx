@@ -1,35 +1,37 @@
 import Link from "next/link";
 
-type LogoProps = {
-  href?: string;
+/**
+ * Logotype TRIPLEX — Bebas Neue (police réservée au logo).
+ * Si `href` est fourni, le logo devient un lien (accueil).
+ */
+export function Logo({
+  className = "text-4xl sm:text-5xl",
+  href,
+  imageUrl,
+}: {
   className?: string;
-  size?: "sm" | "md" | "lg";
-};
-
-const sizes = {
-  sm: "text-lg tracking-[0.12em]",
-  md: "text-xl tracking-[0.16em] sm:text-2xl",
-  lg: "text-3xl tracking-[0.18em] sm:text-4xl",
-};
-
-export function Logo({ href, className = "", size = "md" }: LogoProps) {
-  const mark = (
+  href?: string;
+  /** Logo importé depuis l'admin ; remplace le logotype texte. */
+  imageUrl?: string | null;
+}) {
+  const mark = imageUrl ? (
+    <span className={`inline-flex items-center leading-none ${className}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={imageUrl} alt="TRIPLEX" style={{ height: "1.1em", width: "auto" }} />
+    </span>
+  ) : (
     <span
-      className={`font-serif font-medium text-brown ${sizes[size]} ${className}`}
+      className={`font-display leading-none tracking-[0.18em] ${className}`}
+      aria-label="TRIPLEX"
     >
-      StreetWe
-      <span className="relative inline-block px-[0.12em] text-gold" aria-hidden>
-        ▲
-      </span>
-      lth Co.
+      TRIPLE<span className="text-gold">X</span>
     </span>
   );
-
-  const destination = href ?? "/";
-
-  return (
-    <Link href={destination} className="inline-flex items-baseline" aria-label="StreetWealth Co.">
+  return href ? (
+    <Link href={href} aria-label="TRIPLEX — accueil">
       {mark}
     </Link>
+  ) : (
+    mark
   );
 }

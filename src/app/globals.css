@@ -1,45 +1,73 @@
 @import "tailwindcss";
 
 :root {
-  --sw-cream: #e8d8c0;
-  --sw-ivory: #f3ebdd;
-  --sw-brown: #24150f;
-  --sw-brown-soft: #5c493d;
-  --sw-gold: #a9844f;
-  --sw-border: #cdbb9f;
-  --sw-muted: #75685d;
-  --sw-white: #faf8f3;
+  --tx-cream: #e8d8c0;
+  --tx-ivory: #f3ebdd;
+  --tx-brown: #24150f;
+  --tx-brown-soft: #5c493d;
+  --tx-gold: #a9844f;
+  --tx-border: #cdbb9f;
+  --tx-muted: #75685d;
+  --tx-white: #faf8f3;
 }
 
 @theme inline {
-  --color-cream: var(--sw-cream);
-  --color-ivory: var(--sw-ivory);
-  --color-brown: var(--sw-brown);
-  --color-brown-soft: var(--sw-brown-soft);
-  --color-gold: var(--sw-gold);
-  --color-border: var(--sw-border);
-  --color-muted: var(--sw-muted);
-  --color-white: var(--sw-white);
+  --color-cream: var(--tx-cream);
+  --color-ivory: var(--tx-ivory);
+  --color-brown: var(--tx-brown);
+  --color-brown-soft: var(--tx-brown-soft);
+  --color-gold: var(--tx-gold);
+  --color-border: var(--tx-border);
+  --color-muted: var(--tx-muted);
+  --color-white: var(--tx-white);
   --font-sans: var(--font-outfit);
   --font-serif: var(--font-cormorant);
+  --font-display: var(--font-bebas);
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
+html,
 body {
-  background: var(--sw-cream);
-  color: var(--sw-brown);
+  height: 100%;
+  overflow: hidden;
+  background: var(--tx-brown);
+  color: var(--tx-ivory);
 }
 
-::selection {
-  background: var(--sw-gold);
-  color: var(--sw-ivory);
+/* Mot géant en filigrane : suit la couleur d'encre de la scène */
+.tx-ghost {
+  color: color-mix(in srgb, currentColor 12%, transparent);
 }
 
-input,
-textarea,
-button {
-  font-family: inherit;
+/* Boutons filaires : héritent de la couleur d'encre de la scène */
+.tx-btn {
+  border: 1px solid color-mix(in srgb, currentColor 55%, transparent);
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  padding: 0.85rem 1.6rem;
+  transition:
+    background-color 0.4s ease,
+    border-color 0.4s ease;
+}
+
+.tx-btn:hover,
+.tx-btn:focus-visible {
+  border-color: currentColor;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+/* Grain léger sur toute la scène */
+.tx-grain {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  opacity: 0.09;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 4px;
 }

@@ -1,10 +1,9 @@
-import type { Metadata } from "next";
-import { Cormorant_Garamond, Outfit } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Bebas_Neue, Cormorant_Garamond, Outfit } from "next/font/google";
 import { CartDrawer } from "@/components/CartDrawer";
 import { CartProvider } from "@/components/CartProvider";
-import { SiteFooter } from "@/components/SiteFooter";
-import { SiteHeader } from "@/components/SiteHeader";
 import { brand } from "@/lib/brand";
+import { getCatalog } from "@/server/catalog";
 import "./globals.css";
 
 const sans = Outfit({
@@ -19,25 +18,48 @@ const serif = Cormorant_Garamond({
   weight: ["400", "500", "600"],
 });
 
+/** Police réservée au logotype. */
+const display = Bebas_Neue({
+  variable: "--font-bebas",
+  subsets: ["latin"],
+  weight: "400",
+});
+
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.SITE_URL ?? "http://localhost:3000"),
   title: {
-    default: `${brand.name} — ${brand.tagline}`,
+    default: `${brand.name} — Exposition`,
     template: `%s — ${brand.name}`,
   },
-  description: `${brand.tagline} ${brand.mission}`,
+  description: brand.tagline,
+  openGraph: {
+    title: brand.name,
+    description: brand.tagline,
+    siteName: brand.name,
+    locale: "fr_FR",
+    type: "website",
+  },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export const viewport: Viewport = {
+  themeColor: "#24150F",
+};
+
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const catalog = (await getCatalog()).map(({ slug, name, price, sizes }) => ({
+    slug,
+    name,
+    price,
+    sizes,
+  }));
   return (
     <html
       lang="fr"
-      className={`${sans.variable} ${serif.variable} h-full antialiased`}
+      className={`${sans.variable} ${serif.variable} ${display.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-cream font-sans text-brown">
-        <CartProvider>
-          <SiteHeader />
-          <main className="flex-1">{children}</main>
-          <SiteFooter />
+      <body className="h-full font-sans">
+        <CartProvider catalog={catalog}>
+          {children}
           <CartDrawer />
         </CartProvider>
       </body>
