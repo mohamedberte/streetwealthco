@@ -12,7 +12,29 @@ type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const page = await getPage(slug);
-  return { title: page?.title ?? "Informations" };
+  if (!page) return { title: "Informations", robots: { index: false } };
+  const description = page.intro || brand.tagline;
+  const path = `/infos/${page.slug}`;
+  return {
+    title: page.title,
+    description,
+    alternates: { canonical: path },
+    openGraph: {
+      title: `${page.title} — ${brand.name}`,
+      description,
+      url: path,
+      siteName: brand.name,
+      locale: "fr_FR",
+      type: "website",
+      images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: brand.name }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${page.title} — ${brand.name}`,
+      description,
+      images: ["/opengraph-image"],
+    },
+  };
 }
 
 export default async function InfoPage({ params }: Props) {

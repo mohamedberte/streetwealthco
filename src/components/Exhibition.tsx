@@ -11,6 +11,7 @@ import { InfoPanel } from "@/components/InfoPanel";
 import { Logo } from "@/components/Logo";
 import { Lookbook } from "@/components/Lookbook";
 import { Reserve } from "@/components/Reserve";
+import { ShareButton } from "@/components/ShareButton";
 import { editionTotal, formatPrice, isLimited, type Product } from "@/lib/products";
 
 export type Availability = Record<string, Record<string, number>>;
@@ -480,6 +481,7 @@ export function Exhibition({
                   Voir les looks · {product.scenes.length}
                 </button>
               )}
+              <ShareButton slug={product.slug} name={product.name} />
             </div>
 
             <div className="flex flex-col gap-4 sm:items-end">

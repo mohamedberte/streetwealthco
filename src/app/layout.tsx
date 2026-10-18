@@ -32,6 +32,15 @@ export const metadata: Metadata = {
     template: `%s — ${brand.name}`,
   },
   description: brand.tagline,
+  applicationName: brand.name,
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+  },
+  appleWebApp: { title: brand.name, statusBarStyle: "black-translucent" },
+  formatDetection: { telephone: false, email: false, address: false },
   openGraph: {
     title: brand.name,
     description: brand.tagline,
@@ -39,10 +48,16 @@ export const metadata: Metadata = {
     locale: "fr_FR",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: brand.name,
+    description: brand.tagline,
+  },
 };
 
 export const viewport: Viewport = {
   themeColor: "#24150F",
+  colorScheme: "light",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

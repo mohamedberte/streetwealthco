@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>TRIPLEX</title>
+  <rect width="64" height="64" fill="#24150F"/>
+  <rect x="14" y="16" width="36" height="8" fill="#E8D8C0"/>
+  <rect x="28" y="24" width="8" height="26" fill="#E8D8C0"/>
+  <rect x="22" y="54" width="20" height="2" fill="#A9844F"/>
+</svg>
