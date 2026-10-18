@@ -2,6 +2,7 @@ import "server-only";
 import { randomBytes } from "node:crypto";
 import { getProduct, type CatalogProduct } from "./catalog";
 import { policy, zones, type ZoneId } from "@/lib/shipping";
+import { roundMoney } from "@/lib/products";
 import { DbError, db, unwrap } from "./db";
 import { SoldOutError, ensureDefaultInventory, type StockLine } from "./inventory";
 
@@ -100,12 +101,11 @@ export async function createOrder(input: NewOrder) {
   const { lines, catalog } = await normalize(input.items);
   if (lines.length === 0) throw new OrderError("La sélection est vide.");
 
-  const subtotal = lines.reduce(
-    (sum, line) => sum + (catalog.get(line.slug)?.price ?? 0) * line.quantity,
-    0,
+  const subtotal = roundMoney(
+    lines.reduce((sum, line) => sum + (catalog.get(line.slug)?.price ?? 0) * line.quantity, 0),
   );
   const shipping = zones[input.zone].fee;
-  const total = subtotal + shipping;
+  const total = roundMoney(subtotal + shipping);
   const token = randomBytes(18).toString("base64url");
   const expiresAt = new Date(Date.now() + policy.reservationMinutes * 60_000);
 

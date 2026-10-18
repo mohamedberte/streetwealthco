@@ -1,5 +1,6 @@
 import "server-only";
 import { brand } from "@/lib/brand";
+import { toCents } from "@/lib/products";
 import { countryName, zones } from "@/lib/shipping";
 import { SELLER_COUNTRY, formatCents, formatRate, splitVat, vatRateFor, type VatMode } from "@/lib/vat";
 import { getBillingForInvoice } from "./company";
@@ -94,9 +95,9 @@ function buildLines(order: Order, rate: number): InvoiceLine[] {
     ...order.items.map((item) => ({
       label: `${item.name} - taille ${item.size}`,
       quantity: item.quantity,
-      unitTtc: item.unit_price * 100,
+      unitTtc: toCents(item.unit_price),
     })),
-    { label: `Livraison - ${zones[order.zone].label}`, quantity: 1, unitTtc: order.shipping * 100 },
+    { label: `Livraison - ${zones[order.zone].label}`, quantity: 1, unitTtc: toCents(order.shipping) },
   ];
   return entries.map(({ label, quantity, unitTtc }) => {
     // TTC = prix payé (inchangé quel que soit le pays) ; HT et TVA en sont déduits sur le total de la ligne.
@@ -241,7 +242,7 @@ async function issue(order: Order, kind: InvoiceKind, original: InvoiceRow | nul
   }
 
   const totalTtc = sum(lines, "totalTtc");
-  if (Math.abs(totalTtc) !== order.total * 100) {
+  if (Math.abs(totalTtc) !== toCents(order.total)) {
     throw new Error(`Total de la facture incohérent avec la commande ${order.number}.`);
   }
 

@@ -86,7 +86,7 @@ function CartPanel() {
             <div className="flex-1 overflow-y-auto px-6 py-6">
               {items.length === 0 ? (
                 <p className="font-serif text-2xl text-ivory/70">
-                  Aucune pièce réservée pour l&apos;instant.
+                  Votre sélection est vide pour l&apos;instant.
                 </p>
               ) : (
                 <ul className="space-y-6">

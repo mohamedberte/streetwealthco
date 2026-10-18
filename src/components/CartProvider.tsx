@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { roundMoney } from "@/lib/products";
 import { policy } from "@/lib/shipping";
 
 /** Pièces commandables, fournies par le serveur (prix et tailles à jour). */
@@ -119,7 +120,7 @@ export function CartProvider({
 
   const value = useMemo(() => {
     const count = items.reduce((sum, item) => sum + item.quantity, 0);
-    const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const total = roundMoney(items.reduce((sum, item) => sum + item.price * item.quantity, 0));
     return { items, open, setOpen, addItem, changeQuantity, removeItem, clear, count, total };
   }, [items, open, addItem, changeQuantity, removeItem, clear]);
 

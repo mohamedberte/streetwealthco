@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { garmentKinds, type GarmentKind } from "@/lib/products";
+import { garmentKinds, roundMoney, type GarmentKind } from "@/lib/products";
 import { isAdmin } from "@/server/admin-auth";
 import {
   createProduct,
@@ -40,7 +40,7 @@ const productSchema = z.object({
   name: z.string().trim().min(2).max(80),
   word: z.string().trim().min(1).max(24),
   silhouette: z.string().trim().min(1).max(40),
-  price: z.coerce.number().int().min(0).max(10_000),
+  price: z.coerce.number().min(0).max(10_000).transform(roundMoney),
   description: z.string().trim().max(600),
   fabric: z.string().trim().max(80),
   edition: z.string().trim().min(1).max(40),

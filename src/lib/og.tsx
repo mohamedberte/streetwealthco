@@ -119,7 +119,7 @@ export function productCard(product: Product, photo: string | null) {
             <div style={{ display: "flex", width: 72, height: 2, background: tone.accent ?? color.gold }} />
             <div style={{ display: "flex", marginTop: 32, fontSize: 76, lineHeight: 1.05 }}>{product.name}</div>
             <div style={{ display: "flex", marginTop: 28, fontSize: 30, letterSpacing: "0.08em" }}>
-              {`${product.price} €  ·  Édition ${product.edition}`}
+              {`${String(product.price).replace(".", ",")} €  ·  Édition ${product.edition}`}
             </div>
             <div style={{ display: "flex", marginTop: 14, fontSize: 22, letterSpacing: "0.22em", opacity: 0.6 }}>
               {product.silhouette.toUpperCase()}

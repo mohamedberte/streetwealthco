@@ -177,11 +177,19 @@ export function editionTotal(product: Product) {
   return product.stockPerSize * product.sizes.length;
 }
 
-/** Montants en euros (TTC). */
+/** Arrondit un montant en euros au centime (évite 89.97000000000001 après une somme). */
+export const roundMoney = (amount: number) => Math.round(amount * 100) / 100;
+
+/** Montant en centimes entiers, pour la facturation et Stripe. */
+export const toCents = (amount: number) => Math.round(amount * 100);
+
+/** Montants en euros (TTC) : « 189 € » pour un prix rond, « 29,99 € » sinon. */
 export function formatPrice(amount: number) {
+  const value = roundMoney(amount);
   return new Intl.NumberFormat("fr-FR", {
     style: "currency",
     currency: "EUR",
-    maximumFractionDigits: 0,
-  }).format(amount);
+    minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(value);
 }

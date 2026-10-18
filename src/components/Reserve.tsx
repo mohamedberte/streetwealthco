@@ -77,7 +77,7 @@ export function Reserve({ slug, name, price, sizes, available }: ReserveProps) {
       ? "Épuisé — me prévenir"
       : open
         ? "Choisir une taille"
-        : "Réserver";
+        : "Commander";
 
   const panel =
     "absolute bottom-full right-0 mb-3 border border-current/30 bg-current/10 backdrop-blur-md";

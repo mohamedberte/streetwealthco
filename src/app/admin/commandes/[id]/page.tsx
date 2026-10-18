@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { carrierLabel, trackingUrl } from "@/lib/carriers";
-import { formatPrice } from "@/lib/products";
+import { formatPrice, toCents } from "@/lib/products";
 import { countryName, zones } from "@/lib/shipping";
 import { formatCents, formatRate, splitVat, vatRateFor } from "@/lib/vat";
 import { isAdmin } from "@/server/admin-auth";
@@ -67,7 +67,7 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
   const vat = invoice
     ? { ht: invoice.total_ht, vat: invoice.total_vat }
     : (() => {
-        const split = splitVat(order.total * 100, rate);
+        const split = splitVat(toCents(order.total), rate);
         return { ht: split.ht, vat: split.vat };
       })();
 

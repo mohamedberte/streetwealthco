@@ -68,14 +68,14 @@ export function ProductForm({ product }: { product?: CatalogProduct }) {
           className={input}
         />
       </Field>
-      <Field name={`${id}-price`} title="Prix TTC (€, entier)">
+      <Field name={`${id}-price`} title="Prix TTC (€, centimes possibles : 29,99)">
         <input
           id={`${id}-price`}
           name="price"
           type="number"
           min={0}
           max={10000}
-          step={1}
+          step={0.01}
           required
           defaultValue={product?.price}
           className={input}

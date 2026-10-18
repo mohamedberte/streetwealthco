@@ -50,6 +50,8 @@ export function Exhibition({
   const slideRefs = useRef<(HTMLElement | null)[]>([]);
   const indexRef = useRef(initialIndex);
   const lockUntil = useRef(0);
+  /** Transition en cours : interrompue si un nouveau geste arrive avant sa fin. */
+  const transition = useRef<gsap.core.Timeline | null>(null);
   const cartOpenRef = useRef(false);
   const infoOpenRef = useRef(false);
   const lookbookOpenRef = useRef(false);
@@ -97,14 +99,15 @@ export function Exhibition({
     };
   }, [cartOpen]);
 
-  const go = useCallback((to: number, dir?: 1 | -1) => {
+  /** Renvoie false si la transition n'a pas démarré (verrou, même pièce). */
+  const go = useCallback((to: number, dir?: 1 | -1): boolean => {
     const root = rootRef.current;
     const now = performance.now();
     const from = indexRef.current;
     const target = ((to % COUNT) + COUNT) % COUNT;
     const out = slideRefs.current[from];
     const inn = slideRefs.current[target];
-    if (!root || !out || !inn || target === from || now < lockUntil.current) return;
+    if (!root || !out || !inn || target === from || now < lockUntil.current) return false;
 
     const d = dir ?? (target > from ? 1 : -1);
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -120,14 +123,23 @@ export function Exhibition({
     setHinted(false);
     window.history.replaceState(null, "", `/?piece=${products[target].slug}`);
 
-    gsap.killTweensOf(q(out, "[data-art]"), "x,rotation");
+    // L'animation précédente dure plus longtemps que le verrou : sans interruption, ses derniers
+    // mouvements (et sa fin différée) écraseraient ceux-ci et masqueraient la pièce qui revient.
+    transition.current?.kill();
+    const parts = "[data-char],[data-art],[data-ring],[data-reveal]";
+    gsap.killTweensOf(q(out, parts));
+    gsap.killTweensOf(q(inn, parts));
+    slideRefs.current.forEach((slide, i) => {
+      if (slide && i !== from && i !== target) gsap.set(slide, { autoAlpha: 0 });
+    });
 
     const tl = gsap.timeline({
       defaults: { ease: "power3.inOut" },
       onComplete: () => {
-        gsap.set(out, { autoAlpha: 0 });
+        if (indexRef.current !== from) gsap.set(out, { autoAlpha: 0 });
       },
     });
+    transition.current = tl;
     if (reduce) tl.timeScale(12);
 
     tl.to(root, {
@@ -200,6 +212,7 @@ export function Exhibition({
         { y: 0, autoAlpha: 1, stagger: 0.07, duration: 0.8, ease: "power3.out" },
         0.75,
       );
+    return true;
   }, [products, COUNT]);
 
   const next = useCallback(() => go(indexRef.current + 1, 1), [go]);
@@ -304,10 +317,9 @@ export function Exhibition({
     const onUp = () => {
       if (!dragging) return;
       dragging = false;
-      if (Math.abs(dx) > 70) {
-        if (dx < 0) next();
-        else prev();
-      } else {
+      // Un glisser qui ne déclenche aucune transition (trop court, ou animation en cours) ramène la pièce.
+      const moved = Math.abs(dx) > 70 && (dx < 0 ? next() : prev());
+      if (!moved) {
         const art = activeArt();
         if (art) {
           gsap.to(art, { x: 0, rotation: 0, duration: 0.9, ease: "elastic.out(1, 0.6)", overwrite: "auto" });
