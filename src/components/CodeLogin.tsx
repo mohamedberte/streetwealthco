@@ -21,12 +21,15 @@ export function CodeLogin({
   next = "/compte",
   hint,
   autoSend = false,
+  onDone,
 }: {
   defaultEmail?: string;
   next?: string;
   hint?: string;
   /** Envoie le code d'office si le client a coché « créer mon compte » pendant la commande. */
   autoSend?: boolean;
+  /** Appelé après connexion, à la place de la redirection vers `next`. */
+  onDone?: () => void;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<"email" | "code">("email");
@@ -95,6 +98,11 @@ export function CodeLogin({
     if (!result.ok) {
       setBusy(false);
       setError(result.error);
+      return;
+    }
+    if (onDone) {
+      router.refresh();
+      onDone();
       return;
     }
     router.push(next);

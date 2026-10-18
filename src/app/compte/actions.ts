@@ -74,6 +74,7 @@ export type CheckoutProfile = {
   name: string;
   phone: string;
   zone: ZoneId;
+  country: string;
   address: string;
   postalCode: string;
   city: string;
@@ -88,6 +89,7 @@ export async function checkoutProfile(): Promise<CheckoutProfile | null> {
     name: last?.name ?? "",
     phone: last?.phone ?? "",
     zone: last?.zone ?? "france",
+    country: last?.country ?? "FR",
     address: last?.address ?? "",
     postalCode: last?.postal_code ?? "",
     city: last?.city ?? "",

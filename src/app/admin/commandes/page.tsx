@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { formatPrice } from "@/lib/products";
-import { zones } from "@/lib/shipping";
+import { countryName, zones } from "@/lib/shipping";
 import { isAdmin } from "@/server/admin-auth";
 import { listOrders, type Order, type OrderStatus } from "@/server/orders";
 import { cancelOrderAction, deliverOrder, refundOrderAction, shipOrder } from "../actions";
@@ -99,7 +99,7 @@ function OrderCard({ order }: { order: Order }) {
         <p className="leading-relaxed text-brown-soft">
           {order.address}
           <br />
-          {order.postal_code} {order.city} · {zones[order.zone].label}
+          {order.postal_code} {order.city} · {countryName(order.country)} · {zones[order.zone].label}
           {order.notes && (
             <>
               <br />

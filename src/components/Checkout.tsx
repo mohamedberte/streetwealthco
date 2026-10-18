@@ -7,15 +7,16 @@ import { AddressInput } from "@/components/AddressInput";
 import { useCart } from "@/components/CartProvider";
 import { ACCOUNT_OFFER_KEY } from "@/lib/account-offer";
 import { formatPrice } from "@/lib/products";
-import { zoneIds, zones, type ZoneId } from "@/lib/shipping";
+import { zoneIds, zones, euCountries, type ZoneId } from "@/lib/shipping";
 
 const field =
   "mt-2 w-full border border-ivory/25 bg-transparent px-3 py-2.5 text-sm text-ivory outline-none placeholder:text-ivory/35 focus:border-ivory";
 const label = "block text-[10px] uppercase tracking-[0.22em] text-ivory/60";
 
-export function Checkout({ onBack }: { onBack: () => void }) {
+export function Checkout({ onBack, onLogin }: { onBack: () => void; onLogin: () => void }) {
   const { items, total } = useCart();
   const [zone, setZone] = useState<ZoneId>("france");
+  const [country, setCountry] = useState("");
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -31,7 +32,10 @@ export function Checkout({ onBack }: { onBack: () => void }) {
         const form = formRef.current;
         if (!alive || !profile || !form) return;
         setAccount(true);
-        if (profile.address) setZone(profile.zone);
+        if (profile.address) {
+          setZone(profile.zone);
+          if (profile.zone === "europe") setCountry(profile.country);
+        }
         const fill = (name: string, value: string) => {
           const element = form.elements.namedItem(name);
           if (element instanceof HTMLInputElement && !element.value) element.value = value;
@@ -72,6 +76,7 @@ export function Checkout({ onBack }: { onBack: () => void }) {
       email: form.get("email"),
       phone: form.get("phone"),
       zone,
+      country: zone === "france" ? "FR" : country,
       address: form.get("address"),
       postalCode: form.get("postalCode"),
       city: form.get("city"),
@@ -119,9 +124,9 @@ export function Checkout({ onBack }: { onBack: () => void }) {
           ) : (
             <>
               Déjà client ?{" "}
-              <a href="/compte?next=/" className="underline hover:text-ivory">
+              <button type="button" onClick={onLogin} className="underline hover:text-ivory">
                 Se connecter
-              </a>
+              </button>
             </>
           )}
         </p>
@@ -190,11 +195,37 @@ export function Checkout({ onBack }: { onBack: () => void }) {
           </div>
         </fieldset>
 
+        {zone === "europe" && (
+          <div>
+            <label htmlFor="co-country" className={label}>
+              Pays
+            </label>
+            <select
+              id="co-country"
+              name="country"
+              required
+              autoComplete="country"
+              value={country}
+              onChange={(event) => setCountry(event.target.value)}
+              className={`${field} bg-brown`}
+            >
+              <option value="" disabled>
+                Choisir un pays
+              </option>
+              {euCountries.map((item) => (
+                <option key={item.code} value={item.code}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div>
           <label htmlFor="co-address" className={label}>
             Adresse
           </label>
-          <AddressInput enabled={zone === "france"} className={field} onPick={fillAddress} />
+          <AddressInput country={zone === "france" ? "FR" : country} className={field} onPick={fillAddress} />
         </div>
         <div className="grid gap-5 sm:grid-cols-[8rem_1fr]">
           <div>

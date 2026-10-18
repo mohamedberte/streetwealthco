@@ -5,7 +5,7 @@ import { CodeLogin } from "@/components/CodeLogin";
 import { PageShell } from "@/components/PageShell";
 import { brand } from "@/lib/brand";
 import { formatPrice } from "@/lib/products";
-import { zones } from "@/lib/shipping";
+import { countryName, zones } from "@/lib/shipping";
 import { currentUser } from "@/server/auth";
 import { supabaseConfigured } from "@/server/db";
 import { getOrderByToken, type OrderStatus } from "@/server/orders";
@@ -140,6 +140,7 @@ export default async function OrderPage({ params }: Props) {
           {order.name} · {order.phone}
           <br />
           {order.address}, {order.postal_code} {order.city}
+          {order.country !== "FR" && `, ${countryName(order.country)}`}
         </p>
         <p className="mt-6">
           Une question ? <a className="underline" href={`mailto:${brand.email}`}>{brand.email}</a>

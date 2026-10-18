@@ -4,15 +4,16 @@ import { useEffect, useId, useRef, useState } from "react";
 import { suggestAddresses, type AddressSuggestion } from "@/app/address-actions";
 
 /**
- * Champ adresse avec autocomplétion (France). Le choix d'une suggestion renseigne aussi
- * le code postal et la ville ; la saisie manuelle reste toujours possible.
+ * Champ adresse avec autocomplétion (France et Union européenne). Le choix d'une suggestion renseigne
+ * aussi le code postal et la ville ; la saisie manuelle reste toujours possible.
  */
 export function AddressInput({
-  enabled,
+  country,
   className,
   onPick,
 }: {
-  enabled: boolean;
+  /** Code pays ISO ; vide = pas encore choisi (pas de suggestions). */
+  country: string;
   className: string;
   onPick: (suggestion: AddressSuggestion) => void;
 }) {
@@ -27,14 +28,14 @@ export function AddressInput({
 
   function onInput(value: string) {
     clearTimeout(timer.current);
-    if (!enabled || value.trim().length < 4) {
+    if (!country || value.trim().length < 4) {
       setItems([]);
       setOpen(false);
       return;
     }
     const ticket = ++latest.current;
     timer.current = setTimeout(async () => {
-      const result = await suggestAddresses(value);
+      const result = await suggestAddresses(value, country);
       if (ticket !== latest.current) return;
       setItems(result);
       setActive(-1);
