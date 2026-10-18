@@ -3,7 +3,7 @@ export const brand = {
   tagline: "L'expression d'un style distinctif qui transcende les frontières.",
   city: "Abidjan",
   country: "Côte d'Ivoire",
-  email: "contact@triplex.com",
+  email: "contact@triplexbrand.com",
 } as const;
 
 /**
