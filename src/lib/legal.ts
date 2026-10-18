@@ -176,7 +176,7 @@ export const legalPages: LegalPage[] = [
       {
         heading: "Données collectées",
         body: [
-          "Nom, e-mail, téléphone, adresse de livraison et contenu de la commande ; adresse e-mail pour les alertes de retour en stock ; adresse e-mail et mot de passe (chiffré) si vous créez un compte client.",
+          "Nom, e-mail, téléphone, adresse de livraison et contenu de la commande ; adresse e-mail pour les alertes de retour en stock ; adresse e-mail si vous créez un compte client.",
         ],
       },
       {
@@ -188,7 +188,7 @@ export const legalPages: LegalPage[] = [
       {
         heading: "Destinataires",
         body: [
-          "Nos prestataires strictement nécessaires : paiement (Stripe), envoi d'e-mails (Resend), hébergement, base de données et authentification (Vercel, Supabase), stockage des images (Amazon Web Services), transport. Certains peuvent traiter des données hors de l'Union européenne, avec des garanties appropriées. Aucune donnée n'est vendue.",
+          "Nos prestataires strictement nécessaires : paiement (Stripe), envoi d'e-mails (Resend), hébergement, base de données et authentification (Vercel, Supabase), stockage des images (Amazon Web Services), transport. Pour livrer en France, la saisie de votre adresse peut être complétée automatiquement par la Base Adresse Nationale (service public) et, pour les autres pays de l'Union européenne, par le service de géocodage Photon (données OpenStreetMap) : seul le début de l'adresse tapée leur est transmis, par notre serveur. Certains peuvent traiter des données hors de l'Union européenne, avec des garanties appropriées. Aucune donnée n'est vendue.",
         ],
       },
       {

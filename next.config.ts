@@ -40,7 +40,6 @@ const nextConfig: NextConfig = {
       { source: "/admin/:path*", headers: privateHeaders },
       { source: "/commande/:path*", headers: privateHeaders },
       { source: "/compte/:path*", headers: privateHeaders },
-      { source: "/auth/:path*", headers: privateHeaders },
     ];
   },
 };

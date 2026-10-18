@@ -35,6 +35,7 @@ export type OrderRow = {
   name: string;
   phone: string;
   zone: ZoneId;
+  country: string;
   city: string;
   postal_code: string;
   address: string;
@@ -56,6 +57,8 @@ export type NewOrder = {
   name: string;
   phone: string;
   zone: ZoneId;
+  /** Code pays ISO (FR pour la zone France). */
+  country: string;
   city: string;
   postalCode: string;
   address: string;
@@ -114,6 +117,7 @@ export async function createOrder(input: NewOrder) {
         p_name: input.name,
         p_phone: input.phone,
         p_zone: input.zone,
+        p_country: input.country,
         p_city: input.city,
         p_postal_code: input.postalCode,
         p_address: input.address,

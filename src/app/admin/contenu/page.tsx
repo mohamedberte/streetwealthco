@@ -2,12 +2,11 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { PageShell } from "@/components/PageShell";
 import { isAdmin } from "@/server/admin-auth";
 import { getAllPages, getSettings, serializeContent } from "@/server/content";
-import { AdminHeader, Banner } from "../AdminHeader";
+import { AdminTitle, Banner } from "../AdminHeader";
 import { resetPageAction, savePageAction, saveSettingsAction } from "../content-actions";
-import { btn, input, label, sectionTitle } from "../ui";
+import { btn, btnPrimary, card, input, label, sectionTitle } from "../ui";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -25,12 +24,15 @@ export default async function ContentAdminPage({ searchParams }: Props) {
   const [pages, settings] = await Promise.all([getAllPages(), getSettings()]);
 
   return (
-    <PageShell wide>
-      <AdminHeader title="Contenu du site" current="contenu" />
+    <>
+      <AdminTitle
+        title="Contenu du site"
+        lead="Logo, accroche et pages d'information (CGV, retours, mentions…). Les photos des pièces et les looks se gèrent dans « Pièces et stock »."
+      />
       <Banner notice={one(params.notice)} error={one(params.error)} field={one(params.field)} />
 
-      <h2 className={`mt-12 ${sectionTitle}`}>Logo et accroche</h2>
-      <div className="mt-4 grid gap-6 border border-border bg-white/60 p-5 sm:grid-cols-2">
+      <h2 className={`mt-10 ${sectionTitle}`}>Logo et accroche</h2>
+      <div className={`mt-4 grid gap-6 p-5 sm:grid-cols-2 ${card}`}>
         <div>
           <p className={label}>Logo</p>
           {settings.logoUrl ? (
@@ -82,7 +84,7 @@ export default async function ContentAdminPage({ searchParams }: Props) {
           </label>
           <input id="tagline" name="tagline" maxLength={160} defaultValue={settings.tagline} className={input} />
           <p className="text-xs text-muted">Laisser vide pour restaurer l&apos;accroche d&apos;origine.</p>
-          <button type="submit" className={btn}>
+          <button type="submit" className={btnPrimary}>
             Enregistrer
           </button>
         </form>
@@ -95,7 +97,7 @@ export default async function ContentAdminPage({ searchParams }: Props) {
         par un juriste.
       </p>
 
-      <details className="mt-6 border border-border bg-white/60 p-5">
+      <details className={`mt-6 p-5 ${card}`}>
         <summary className={`cursor-pointer ${sectionTitle}`}>Nouvelle page</summary>
         <form action={savePageAction} className="mt-5 space-y-4">
           <input type="hidden" name="mode" value="create" />
@@ -118,7 +120,7 @@ export default async function ContentAdminPage({ searchParams }: Props) {
               className={`${input} mt-1 font-mono`}
             />
           </div>
-          <button type="submit" className={btn}>Créer la page</button>
+          <button type="submit" className={btnPrimary}>Créer la page</button>
         </form>
       </details>
 
@@ -127,7 +129,7 @@ export default async function ContentAdminPage({ searchParams }: Props) {
           <details
             key={page.slug}
             id={`pg-${page.slug}`}
-            className={`border border-border bg-white/60 p-5 ${page.active ? "" : "opacity-70"}`}
+            className={`p-5 ${card} ${page.active ? "" : "opacity-70"}`}
           >
             <summary className="flex cursor-pointer flex-wrap items-baseline justify-between gap-2">
               <span className="font-serif text-xl">
@@ -193,7 +195,7 @@ export default async function ContentAdminPage({ searchParams }: Props) {
                   <input type="checkbox" name="active" value="yes" defaultChecked={page.active} />
                   Visible dans le menu Informations
                 </label>
-                <button type="submit" className={btn}>Enregistrer</button>
+                <button type="submit" className={btnPrimary}>Enregistrer</button>
                 <Link href={`/infos/${page.slug}`} className="text-[11px] uppercase tracking-[0.2em] hover:text-gold">
                   Voir la page →
                 </Link>
@@ -215,6 +217,6 @@ export default async function ContentAdminPage({ searchParams }: Props) {
           </details>
         ))}
       </div>
-    </PageShell>
+    </>
   );
 }

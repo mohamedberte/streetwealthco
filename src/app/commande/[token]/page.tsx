@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ClearCart } from "@/components/ClearCart";
+import { CodeLogin } from "@/components/CodeLogin";
 import { PageShell } from "@/components/PageShell";
 import { brand } from "@/lib/brand";
 import { formatPrice } from "@/lib/products";
-import { zones } from "@/lib/shipping";
+import { countryName, zones } from "@/lib/shipping";
+import { currentUser } from "@/server/auth";
+import { supabaseConfigured } from "@/server/db";
 import { getOrderByToken, type OrderStatus } from "@/server/orders";
 import { settlePayment } from "@/server/payments";
 
@@ -44,6 +47,7 @@ export default async function OrderPage({ params }: Props) {
   const cancelled = order.status === "cancelled";
   const refund = order.status === "refund_needed";
   const stepIndex = STEPS.findIndex((step) => step.status === order.status);
+  const offerAccount = order.payment_status === "paid" && supabaseConfigured() && !(await currentUser());
 
   let headline = `Commande ${order.number}`;
   let message = "";
@@ -120,11 +124,23 @@ export default async function OrderPage({ params }: Props) {
         </ul>
       </section>
 
+      {offerAccount && (
+        <section className="mt-10 max-w-md border border-border bg-ivory p-5">
+          <h2 className="text-[11px] uppercase tracking-[0.26em] text-gold">Créer mon compte</h2>
+          <p className="mb-5 mt-3 text-sm leading-relaxed text-brown-soft">
+            Sans mot de passe : un code envoyé par e-mail suffit. Vous retrouverez cette commande et les
+            suivantes, et vos coordonnées seront pré-remplies.
+          </p>
+          <CodeLogin defaultEmail={order.email} next={`/commande/${token}`} autoSend />
+        </section>
+      )}
+
       <section className="mt-10 text-sm leading-relaxed text-brown-soft">
         <p>
           {order.name} · {order.phone}
           <br />
           {order.address}, {order.postal_code} {order.city}
+          {order.country !== "FR" && `, ${countryName(order.country)}`}
         </p>
         <p className="mt-6">
           Une question ? <a className="underline" href={`mailto:${brand.email}`}>{brand.email}</a>

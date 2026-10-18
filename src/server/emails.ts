@@ -2,7 +2,7 @@ import "server-only";
 import { brand } from "@/lib/brand";
 import { formatPrice } from "@/lib/products";
 import { getAnyProduct } from "./catalog";
-import { zones } from "@/lib/shipping";
+import { countryName, zones } from "@/lib/shipping";
 import { sendMail } from "./mail";
 import type { Order } from "./orders";
 import { unsubscribeToken } from "./unsubscribe";
@@ -67,7 +67,7 @@ export async function sendShippedEmail(order: Order) {
     subject: `Commande ${order.number} expédiée`,
     html: layout(
       `Votre commande est en route`,
-      `<p style="font-size:14px;">Commande ${order.number} expédiée vers ${escape(order.postal_code)} ${escape(order.city)}.</p>${tracking}${trackLink(order)}`,
+      `<p style="font-size:14px;">Commande ${order.number} expédiée vers ${escape(order.postal_code)} ${escape(order.city)}, ${escape(countryName(order.country))}.</p>${tracking}${trackLink(order)}`,
     ),
   });
 }
@@ -107,7 +107,7 @@ export async function sendAdminNotification(order: Order) {
     subject: `Nouvelle commande ${order.number} — ${formatPrice(order.total)}`,
     html: layout(
       `Nouvelle commande ${order.number}`,
-      `<p style="font-size:14px;">${escape(order.name)} — ${escape(order.phone)}<br>${escape(order.address)}, ${escape(order.postal_code)} ${escape(order.city)} (${zones[order.zone].label})</p>${summary(order)}`,
+      `<p style="font-size:14px;">${escape(order.name)} — ${escape(order.phone)}<br>${escape(order.address)}, ${escape(order.postal_code)} ${escape(order.city)}, ${escape(countryName(order.country))} (${zones[order.zone].label})</p>${summary(order)}`,
     ),
   });
 }

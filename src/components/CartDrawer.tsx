@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Checkout } from "@/components/Checkout";
+import { CodeLogin } from "@/components/CodeLogin";
 import { useCart } from "@/components/CartProvider";
 import { formatPrice } from "@/lib/products";
 import { policy } from "@/lib/shipping";
@@ -13,7 +14,7 @@ export function CartButton() {
     <button
       type="button"
       onClick={() => setOpen(true)}
-      className="uppercase tracking-[0.24em] opacity-80 transition-opacity hover:opacity-100"
+      className="uppercase tracking-[0.16em] opacity-80 transition-opacity hover:opacity-100 sm:tracking-[0.24em]"
       aria-label="Ouvrir la sélection"
     >
       Sélection{count > 0 ? ` (${count})` : ""}
@@ -28,8 +29,8 @@ export function CartDrawer() {
 
 function CartPanel() {
   const { items, setOpen, removeItem, changeQuantity, clear, total } = useCart();
-  const [checkout, setCheckout] = useState(false);
-  const step = checkout && items.length > 0 ? "checkout" : "cart";
+  const [view, setView] = useState<"cart" | "checkout" | "login">("cart");
+  const step = view !== "cart" && items.length === 0 ? "cart" : view;
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -50,7 +51,7 @@ function CartPanel() {
       <aside className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col border-l border-ivory/15 bg-brown text-ivory shadow-2xl">
         <div className="flex items-center justify-between border-b border-ivory/15 px-6 py-5">
           <p className="text-[11px] uppercase tracking-[0.28em]">
-            {step === "cart" ? "Votre sélection" : "Finaliser la commande"}
+            {step === "cart" ? "Votre sélection" : step === "login" ? "Connexion" : "Finaliser la commande"}
           </p>
           <button
             type="button"
@@ -62,7 +63,24 @@ function CartPanel() {
         </div>
 
         {step === "checkout" ? (
-          <Checkout onBack={() => setCheckout(false)} />
+          <Checkout onBack={() => setView("cart")} onLogin={() => setView("login")} />
+        ) : step === "login" ? (
+          <div className="flex-1 overflow-y-auto px-6 py-6">
+            <button
+              type="button"
+              onClick={() => setView("checkout")}
+              className="text-[10px] uppercase tracking-[0.2em] text-ivory/60 hover:text-ivory"
+            >
+              ← Retour à la commande
+            </button>
+            <p className="mt-5 text-sm leading-relaxed text-ivory/70">
+              Entrez votre e-mail : un code vous est envoyé et vos coordonnées sont pré-remplies. Votre
+              sélection est conservée.
+            </p>
+            <div className="mt-6 bg-ivory p-5 text-brown">
+              <CodeLogin onDone={() => setView("checkout")} />
+            </div>
+          </div>
         ) : (
           <>
             <div className="flex-1 overflow-y-auto px-6 py-6">
@@ -144,7 +162,7 @@ function CartPanel() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setCheckout(true)}
+                  onClick={() => setView("checkout")}
                   disabled={items.length === 0}
                   className="tx-btn flex-1 bg-ivory px-4 py-3 text-center text-brown hover:bg-ivory/85 disabled:opacity-40"
                 >

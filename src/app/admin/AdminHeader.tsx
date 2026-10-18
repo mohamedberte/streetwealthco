@@ -1,38 +1,4 @@
-import Link from "next/link";
-import { logout } from "./actions";
-import { btn } from "./ui";
-
-/** En-tête commun des sous-pages d'administration. */
-export function AdminHeader({ title, current }: { title: string; current: "produits" | "contenu" }) {
-  const link = (active: boolean) =>
-    `hover:text-gold ${active ? "text-gold" : ""}`;
-  return (
-    <>
-      <div className="flex items-end justify-between gap-4">
-        <h1 className="font-serif text-4xl sm:text-5xl">{title}</h1>
-        <form action={logout}>
-          <button type="submit" className={btn}>
-            Quitter
-          </button>
-        </form>
-      </div>
-      <nav
-        aria-label="Sections"
-        className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[11px] uppercase tracking-[0.22em]"
-      >
-        <Link href="/admin" className="hover:text-gold">
-          ← Tableau de bord
-        </Link>
-        <Link href="/admin/produits" className={link(current === "produits")}>
-          Pièces
-        </Link>
-        <Link href="/admin/contenu" className={link(current === "contenu")}>
-          Contenu du site
-        </Link>
-      </nav>
-    </>
-  );
-}
+import { card } from "./ui";
 
 const NOTICES: Record<string, string> = {
   saved: "Enregistré.",
@@ -42,6 +8,8 @@ const NOTICES: Record<string, string> = {
   image_removed: "Image retirée.",
   scene_added: "Look ajouté.",
   scene_removed: "Look retiré.",
+  refund_failed:
+    "Le remboursement a échoué chez Stripe. Rien n'a été modifié : vérifiez le paiement dans le tableau de bord Stripe puis réessayez.",
 };
 
 const ERRORS: Record<string, string> = {
@@ -79,6 +47,16 @@ const FIELDS: Record<string, string> = {
   tagline: "Accroche",
 };
 
+/** Titre de page d'administration, avec une phrase d'aide facultative. */
+export function AdminTitle({ title, lead }: { title: string; lead?: string }) {
+  return (
+    <header>
+      <h1 className="font-serif text-4xl sm:text-5xl">{title}</h1>
+      {lead && <p className="mt-3 max-w-2xl text-sm leading-relaxed text-brown-soft">{lead}</p>}
+    </header>
+  );
+}
+
 export function Banner({ notice, error, field }: { notice?: string; error?: string; field?: string }) {
   const message = notice
     ? NOTICES[notice]
@@ -88,8 +66,12 @@ export function Banner({ notice, error, field }: { notice?: string; error?: stri
         ? ERRORS[error]
         : undefined;
   if (!message) return null;
+  const bad = Boolean(error) || notice === "refund_failed";
   return (
-    <p role={error ? "alert" : "status"} className="mt-6 border border-gold bg-white/60 p-4 text-sm">
+    <p
+      role={bad ? "alert" : "status"}
+      className={`mt-6 border-l-2 px-4 py-3 text-sm ${card} ${bad ? "border-l-gold" : "border-l-brown"}`}
+    >
       {message}
     </p>
   );

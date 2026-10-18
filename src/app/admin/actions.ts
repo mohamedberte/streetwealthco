@@ -55,7 +55,7 @@ export async function shipOrder(formData: FormData) {
   await setShipped(id, tracking);
   const order = await getOrderById(id);
   if (order && order.status === "shipped") await sendShippedEmail(order);
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
 }
 
 export async function deliverOrder(formData: FormData) {
@@ -63,7 +63,7 @@ export async function deliverOrder(formData: FormData) {
   const id = Number(formData.get("id"));
   if (!Number.isInteger(id)) return;
   await setDelivered(id);
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
 }
 
 export async function cancelOrderAction(formData: FormData) {
@@ -76,7 +76,7 @@ export async function cancelOrderAction(formData: FormData) {
   const lines = await cancelOrder(id);
   // Les pièces remises en stock peuvent débloquer des personnes en attente.
   for (const line of lines) await notifyWaitlist(line.slug, line.size);
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
 }
 
 export async function updateStock(formData: FormData) {
@@ -89,7 +89,7 @@ export async function updateStock(formData: FormData) {
   if (!Number.isInteger(stock) || stock < 0 || stock > 10_000) return;
   await setStock(slug, size, stock);
   await notifyWaitlist(slug, size);
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
 }
 
 /** Rembourse intégralement une commande payée via Stripe, puis met à jour la commande. */
@@ -109,13 +109,13 @@ export async function refundOrderAction(formData: FormData) {
     refundRef = await refundPayment(order.payment_ref, order.number);
   } catch (error) {
     console.error("[refund] échec", error);
-    redirect("/admin?notice=refund_failed");
+    redirect("/admin/commandes?notice=refund_failed");
   }
 
   const restocked = await markRefunded(id, refundRef, restockItems);
   for (const line of restocked) await notifyWaitlist(line.slug, line.size);
   await sendRefundEmail(order);
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
 }
 
 export async function removeWaitlistAction(formData: FormData) {
@@ -123,7 +123,7 @@ export async function removeWaitlistAction(formData: FormData) {
   const id = Number(formData.get("id"));
   if (!Number.isInteger(id)) return;
   await removeWaitlistEntry(id);
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
 }
 
 export async function notifyWaitlistAction(formData: FormData) {
@@ -133,5 +133,5 @@ export async function notifyWaitlistAction(formData: FormData) {
   const product = await getAnyProduct(slug);
   if (!product || !product.sizes.includes(size)) return;
   await notifyWaitlist(slug, size);
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
 }

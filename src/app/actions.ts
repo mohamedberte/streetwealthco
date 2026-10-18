@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { getAnyProduct, getProduct } from "@/server/catalog";
-import { policy, zoneIds, zones, type ZoneId } from "@/lib/shipping";
+import { euCountryCodes, policy, zoneIds, zones, type ZoneId } from "@/lib/shipping";
 import { siteUrl } from "@/server/emails";
 import { SoldOutError } from "@/server/inventory";
 import {
@@ -29,6 +29,7 @@ const orderSchema = z.object({
     .trim()
     .regex(/^[+0-9 ().-]{8,20}$/, "Numéro de téléphone invalide."),
   zone: z.enum(zoneIds as [ZoneId, ...ZoneId[]]),
+  country: z.string().trim().toUpperCase().length(2, "Pays de livraison requis."),
   address: z.string().trim().min(5, "Adresse de livraison requise.").max(200),
   postalCode: z.string().trim().min(3, "Code postal requis.").max(10),
   city: z.string().trim().min(2, "Ville requise.").max(60),
@@ -58,6 +59,12 @@ export async function placeOrder(raw: unknown): Promise<ActionResult> {
   if (data.zone === "france" && !/^\d{5}$/.test(data.postalCode)) {
     return { ok: false, error: "Code postal français invalide (5 chiffres)." };
   }
+  if (data.zone === "france" ? data.country !== "FR" : !euCountryCodes.includes(data.country)) {
+    return { ok: false, error: "Pays de livraison invalide pour cette zone." };
+  }
+  if (data.zone === "europe" && !/^[A-Za-z0-9][A-Za-z0-9 -]{1,9}$/.test(data.postalCode)) {
+    return { ok: false, error: "Code postal invalide." };
+  }
   if (!stripeConfigured()) {
     return { ok: false, error: "Le paiement en ligne n'est pas encore activé." };
   }
@@ -83,6 +90,7 @@ export async function placeOrder(raw: unknown): Promise<ActionResult> {
       name: data.name,
       phone: data.phone,
       zone: data.zone,
+      country: data.country,
       city: data.city,
       postalCode: data.postalCode,
       address: data.address,
