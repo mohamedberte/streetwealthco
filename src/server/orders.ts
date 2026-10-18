@@ -44,6 +44,7 @@ export type OrderRow = {
   shipping: number;
   total: number;
   tracking: string | null;
+  carrier: string | null;
   refund_ref: string | null;
   refunded_at: Date | null;
   expires_at: Date | null;
@@ -182,9 +183,12 @@ export async function setPaymentRef(id: number, ref: string) {
   unwrap(await db().from("orders").update({ payment_ref: ref }).eq("id", id));
 }
 
-export async function listOrders(limit = 60, status?: OrderStatus) {
+export async function listOrders(limit = 60, status?: OrderStatus, search?: string) {
   let request = db().from("orders").select(ORDER_SELECT);
   if (status) request = request.eq("status", status);
+  // On ne garde que des caractères sûrs : la valeur est insérée dans un filtre PostgREST.
+  const term = (search ?? "").replace(/[^\p{L}\p{N}@.\- ]/gu, "").trim().slice(0, 60);
+  if (term) request = request.or(`number.ilike.%${term}%,email.ilike.%${term}%,name.ilike.%${term}%`);
   return unwrap<RawOrder[]>(
     await request.order("created_at", { ascending: false }).limit(limit),
   ).map(toOrder);
@@ -279,11 +283,11 @@ export async function cancelOrder(id: number): Promise<StockLine[]> {
   return unwrap<StockLine[]>(await db().rpc("cancel_order", { p_id: id }));
 }
 
-export async function setShipped(id: number, tracking: string | null) {
+export async function setShipped(id: number, tracking: string | null, carrier: string | null) {
   unwrap(
     await db()
       .from("orders")
-      .update({ status: "shipped", tracking, updated_at: new Date().toISOString() })
+      .update({ status: "shipped", tracking, carrier, updated_at: new Date().toISOString() })
       .eq("id", id)
       .in("status", ["confirmed", "shipped"]),
   );

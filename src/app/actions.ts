@@ -14,6 +14,7 @@ import {
 } from "@/server/orders";
 import { createCheckoutSession, stripeConfigured } from "@/server/stripe";
 import { currentUser } from "@/server/auth";
+import { logOrderEvent } from "@/server/order-events";
 import { clientKey, hashKey, isLimited, recordEvent } from "@/server/rate-limit";
 import { addToWaitlist } from "@/server/waitlist";
 
@@ -58,6 +59,10 @@ export async function placeOrder(raw: unknown): Promise<ActionResult> {
 
   if (data.zone === "france" && !/^\d{5}$/.test(data.postalCode)) {
     return { ok: false, error: "Code postal français invalide (5 chiffres)." };
+  }
+  // DOM et collectivités d'outre-mer (97x, 98x) : autre régime de TVA et de livraison, non proposés ici.
+  if (data.zone === "france" && /^9[78]/.test(data.postalCode) && data.postalCode !== "98000") {
+    return { ok: false, error: "Livraison limitée à la France métropolitaine et à l'Union européenne." };
   }
   if (data.zone === "france" ? data.country !== "FR" : !euCountryCodes.includes(data.country)) {
     return { ok: false, error: "Pays de livraison invalide pour cette zone." };
@@ -114,6 +119,7 @@ export async function placeOrder(raw: unknown): Promise<ActionResult> {
   try {
     const order = await getOrderById(created.id);
     if (!order) throw new Error("Commande introuvable après création.");
+    await logOrderEvent(order.id, "created", `${order.total} EUR TTC`, "client");
 
     const session = await createCheckoutSession({
       number: order.number,

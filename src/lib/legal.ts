@@ -1,4 +1,4 @@
-import { brand, company } from "@/lib/brand";
+import { brand, company as defaultCompany, companyAddress, type Company } from "@/lib/brand";
 import { formatPrice } from "@/lib/products";
 import { policy, zones } from "@/lib/shipping";
 
@@ -10,11 +10,12 @@ export type LegalPage = {
 };
 
 /**
- * Textes des pages d'information, pour une vente à des consommateurs en France.
- * Base de travail : à FAIRE VALIDER par un juriste avant la mise en ligne, et à
- * compléter dans `src/lib/brand.ts` (objet company).
+ * Textes des pages d'information, pour une vente à des consommateurs en France et dans l'Union
+ * européenne. Base de travail : à FAIRE VALIDER par un juriste avant la mise en ligne. Les
+ * informations société viennent de l'admin (/admin/societe), à défaut de `src/lib/brand.ts`.
  */
-export const legalPages: LegalPage[] = [
+export function buildLegalPages(company: Company = defaultCompany): LegalPage[] {
+  return [
   {
     slug: "cgv",
     title: "Conditions générales de vente",
@@ -30,7 +31,8 @@ export const legalPages: LegalPage[] = [
       {
         heading: "2. Prix",
         body: [
-          "Les prix sont indiqués en euros, toutes taxes comprises. Les frais de livraison sont indiqués avant la validation de la commande.",
+          "Les prix sont indiqués en euros, toutes taxes comprises. La TVA appliquée est celle du pays de livraison au sein de l'Union européenne ; elle est détaillée sur la facture. Les frais de livraison sont indiqués avant la validation de la commande.",
+          "Une facture est émise dès le paiement : elle est jointe à l'e-mail de confirmation et téléchargeable depuis la page de suivi de commande.",
         ],
       },
       {
@@ -143,10 +145,10 @@ export const legalPages: LegalPage[] = [
       {
         heading: "Éditeur",
         body: [
-          `${company.legalName} — ${company.legalForm}`,
-          `RCCM : ${company.rccm} · Compte contribuable : ${company.taxId}`,
-          `TVA / OSS : ${company.vatNumber}`,
-          `Siège : ${company.address}`,
+          `${company.legalName} — ${company.legalForm}, capital de ${company.shareCapital}`,
+          `SIRET : ${company.siret} · RCS ${company.rcs}`,
+          `TVA intracommunautaire : ${company.vatNumber}`,
+          `Siège : ${companyAddress(company)}`,
           `Contact : ${brand.email} · ${company.phone}`,
           `Directeur de la publication : ${company.publisher}`,
         ],
@@ -188,13 +190,13 @@ export const legalPages: LegalPage[] = [
       {
         heading: "Destinataires",
         body: [
-          "Nos prestataires strictement nécessaires : paiement (Stripe), envoi d'e-mails (Resend), hébergement, base de données et authentification (Vercel, Supabase), stockage des images (Amazon Web Services), transport. Pour livrer en France, la saisie de votre adresse peut être complétée automatiquement par la Base Adresse Nationale (service public) et, pour les autres pays de l'Union européenne, par le service de géocodage Photon (données OpenStreetMap) : seul le début de l'adresse tapée leur est transmis, par notre serveur. Certains peuvent traiter des données hors de l'Union européenne, avec des garanties appropriées. Aucune donnée n'est vendue.",
+          "Nos prestataires strictement nécessaires : paiement (Stripe), envoi d'e-mails (Resend), hébergement, base de données et authentification (Vercel, Supabase), stockage des images et des factures (Amazon Web Services), transport. Pour livrer en France, la saisie de votre adresse peut être complétée automatiquement par la Base Adresse Nationale (service public) et, pour les autres pays de l'Union européenne, par le service de géocodage Photon (données OpenStreetMap) : seul le début de l'adresse tapée leur est transmis, par notre serveur. Certains peuvent traiter des données hors de l'Union européenne, avec des garanties appropriées. Aucune donnée n'est vendue.",
         ],
       },
       {
         heading: "Conservation",
         body: [
-          "Les données de commande sont conservées le temps nécessaire aux obligations comptables. Les inscriptions aux alertes sont conservées jusqu'à notification ou demande de suppression. Un compte client est conservé jusqu'à sa suppression, que vous pouvez faire à tout moment depuis la page Compte (vos commandes restent conservées de façon détachée du compte pour nos obligations comptables).",
+          "Les données de commande, y compris les factures et avoirs, sont conservées 10 ans pour nos obligations comptables et fiscales. Les inscriptions aux alertes sont conservées jusqu'à notification ou demande de suppression. Un compte client est conservé jusqu'à sa suppression, que vous pouvez faire à tout moment depuis la page Compte (vos commandes restent conservées de façon détachée du compte pour nos obligations comptables).",
         ],
       },
       {
@@ -221,7 +223,4 @@ export const legalPages: LegalPage[] = [
     ],
   },
 ];
-
-export function getLegalPage(slug: string) {
-  return legalPages.find((page) => page.slug === slug);
 }

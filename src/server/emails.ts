@@ -1,11 +1,18 @@
 import "server-only";
 import { brand } from "@/lib/brand";
+import { carrierLabel, trackingUrl } from "@/lib/carriers";
 import { formatPrice } from "@/lib/products";
 import { getAnyProduct } from "./catalog";
-import { countryName, zones } from "@/lib/shipping";
+import { countryName, policy, zones } from "@/lib/shipping";
 import { sendMail } from "./mail";
 import type { Order } from "./orders";
 import { unsubscribeToken } from "./unsubscribe";
+
+/** Document PDF joint à un e-mail (facture ou avoir). */
+export type MailDocument = { number: string; pdf: Uint8Array };
+
+const attach = (document?: MailDocument | null) =>
+  document ? [{ filename: `${document.number}.pdf`, content: document.pdf }] : undefined;
 
 export function siteUrl() {
   const url = process.env.SITE_URL;
@@ -47,27 +54,50 @@ function trackLink(order: Order) {
   return `<p style="margin:24px 0 0;"><a href="${url}" style="color:#A9844F;">Suivre ma commande</a></p>`;
 }
 
-export async function sendOrderConfirmation(order: Order) {
+export async function sendOrderConfirmation(order: Order, invoice?: MailDocument | null) {
+  const invoiceNote = invoice
+    ? `<p style="font-size:14px;">Votre facture ${invoice.number} est jointe à cet e-mail ; elle reste téléchargeable depuis le suivi de commande.</p>`
+    : "";
   await sendMail({
     to: order.email,
     subject: `Commande ${order.number} confirmée`,
     html: layout(
       `Commande ${order.number} confirmée`,
-      `<p style="font-size:14px;">Bonjour ${escape(order.name)}, votre paiement est bien reçu et votre commande est enregistrée. Livraison estimée : ${zones[order.zone].delay}.</p>${summary(order)}<p style="font-size:12px;color:#75685D;">Vous disposez de 14 jours à compter de la réception pour exercer votre droit de rétractation.</p>${trackLink(order)}`,
+      `<p style="font-size:14px;">Bonjour ${escape(order.name)}, votre paiement est bien reçu et votre commande est enregistrée. Livraison estimée : ${zones[order.zone].delay}.</p>${summary(order)}${invoiceNote}<p style="font-size:12px;color:#75685D;">Vous disposez de ${policy.withdrawalDays} jours à compter de la réception pour exercer votre droit de rétractation.</p>${trackLink(order)}`,
     ),
+    attachments: attach(invoice),
   });
 }
 
 export async function sendShippedEmail(order: Order) {
-  const tracking = order.tracking
-    ? `<p style="font-size:14px;">Suivi : ${escape(order.tracking)}</p>`
-    : "";
+  const carrier = carrierLabel(order.carrier);
+  const url = trackingUrl(order.carrier, order.tracking);
+  const tracking = [
+    carrier ? `<p style="font-size:14px;margin:0 0 4px;">Transporteur : ${escape(carrier)}</p>` : "",
+    order.tracking
+      ? `<p style="font-size:14px;margin:0;">Numéro de suivi : ${
+          url ? `<a href="${url}" style="color:#A9844F;">${escape(order.tracking)}</a>` : escape(order.tracking)
+        }</p>`
+      : "",
+  ].join("");
   await sendMail({
     to: order.email,
     subject: `Commande ${order.number} expédiée`,
     html: layout(
       `Votre commande est en route`,
       `<p style="font-size:14px;">Commande ${order.number} expédiée vers ${escape(order.postal_code)} ${escape(order.city)}, ${escape(countryName(order.country))}.</p>${tracking}${trackLink(order)}`,
+    ),
+  });
+}
+
+export async function sendDeliveredEmail(order: Order) {
+  const returnUrl = `${siteUrl()}/commande/${order.token}/retour`;
+  await sendMail({
+    to: order.email,
+    subject: `Commande ${order.number} livrée`,
+    html: layout(
+      "Votre commande est livrée",
+      `<p style="font-size:14px;">Bonjour ${escape(order.name)}, votre commande ${order.number} est marquée comme livrée. Nous espérons que vos pièces vous plaisent.</p><p style="font-size:12px;color:#75685D;">Vous disposez de ${policy.withdrawalDays} jours pour vous rétracter. Un bordereau de retour avec le formulaire de rétractation est disponible : <a href="${returnUrl}" style="color:#A9844F;">télécharger le bordereau</a>.</p>${trackLink(order)}`,
     ),
   });
 }
@@ -88,26 +118,33 @@ export async function sendRestockEmail(email: string, slug: string, size: string
   });
 }
 
-export async function sendRefundEmail(order: Order) {
+export async function sendRefundEmail(order: Order, creditNote?: MailDocument | null) {
+  const note = creditNote
+    ? `<p style="font-size:14px;">L'avoir ${creditNote.number} correspondant est joint à cet e-mail.</p>`
+    : "";
   await sendMail({
     to: order.email,
     subject: `Commande ${order.number} remboursée`,
     html: layout(
       "Remboursement effectué",
-      `<p style="font-size:14px;">Bonjour ${escape(order.name)}, votre commande ${order.number} a été intégralement remboursée (${formatPrice(order.total)}). Le montant est crédité sur votre moyen de paiement d'origine sous 5 à 10 jours ouvrés, selon votre banque.</p>`,
+      `<p style="font-size:14px;">Bonjour ${escape(order.name)}, votre commande ${order.number} a été intégralement remboursée (${formatPrice(order.total)}). Le montant est crédité sur votre moyen de paiement d'origine sous 5 à 10 jours ouvrés, selon votre banque.</p>${note}`,
     ),
+    attachments: attach(creditNote),
   });
 }
 
-export async function sendAdminNotification(order: Order) {
+export async function sendAdminNotification(order: Order, invoiceProblem?: string) {
   const to = process.env.ADMIN_EMAIL;
   if (!to) return;
+  const warning = invoiceProblem
+    ? `<p style="font-size:14px;color:#A9844F;">La facture n'a pas pu être émise : ${escape(invoiceProblem)}. Corrigez puis émettez-la depuis la page de la commande dans l'admin.</p>`
+    : "";
   await sendMail({
     to,
     subject: `Nouvelle commande ${order.number} — ${formatPrice(order.total)}`,
     html: layout(
       `Nouvelle commande ${order.number}`,
-      `<p style="font-size:14px;">${escape(order.name)} — ${escape(order.phone)}<br>${escape(order.address)}, ${escape(order.postal_code)} ${escape(order.city)}, ${escape(countryName(order.country))} (${zones[order.zone].label})</p>${summary(order)}`,
+      `<p style="font-size:14px;">${escape(order.name)} — ${escape(order.phone)}<br>${escape(order.address)}, ${escape(order.postal_code)} ${escape(order.city)}, ${escape(countryName(order.country))} (${zones[order.zone].label})</p>${summary(order)}${warning}`,
     ),
   });
 }

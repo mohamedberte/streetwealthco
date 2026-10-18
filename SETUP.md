@@ -58,7 +58,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 Supabase fournit la base PostgreSQL et l'authentification. Les images restent sur AWS (S3 + CloudFront, section 6 bis). Le site accede aux donnees uniquement depuis le serveur, avec la cle `service_role`, apres avoir verifie les droits ; le RLS est actif sur toutes les tables (lecture publique du catalogue et des pages, un client ne lit que ses commandes).
 
 1. Creer un projet Supabase (region UE, par exemple Francfort). Renseigner `NEXT_PUBLIC_SUPABASE_URL`, la cle publique et `SUPABASE_SERVICE_ROLE_KEY` (Project Settings > API).
-2. Creer les tables et fonctions : ouvrir SQL Editor, coller le contenu de `supabase/migrations/20261017000000_init.sql` et l'executer (ou `supabase db push` avec la CLI Supabase). Executer ensuite, dans l'ordre, les fichiers suivants de `supabase/migrations/` (ex. `20261018000000_country.sql` : pays de livraison des commandes UE). Les transactions sensibles (reservation de stock, paiement, annulation, remboursement) sont des fonctions SQL reservees au `service_role`.
+2. Creer les tables et fonctions : ouvrir SQL Editor, coller le contenu de `supabase/migrations/20261017000000_init.sql` et l'executer (ou `supabase db push` avec la CLI Supabase). Executer ensuite, dans l'ordre, les fichiers suivants de `supabase/migrations/` (ex. `20261018000000_country.sql` : pays de livraison des commandes UE ; `20261019000000_documents.sql` : factures, avoirs, historique des commandes, transporteur). Les transactions sensibles (reservation de stock, paiement, annulation, remboursement) sont des fonctions SQL reservees au `service_role`.
 3. Le stock par taille est initialise depuis `src/lib/products.ts` (`stockPerSize`) ; il se modifie ensuite dans `/admin`.
 4. **Compte administrateur** : Authentication > Users > Add user (e-mail + mot de passe fort, cocher "Auto Confirm User"), puis dans SQL Editor :
 
@@ -126,23 +126,36 @@ Mise en place cote AWS :
 }
 ```
 
-3. **Utilisateur IAM** dedie au site, sans acces console, avec uniquement ce droit :
+3. **Utilisateur IAM** dedie au site, sans acces console, avec uniquement ces droits (`media/` : images publiques ; `documents/` : factures et avoirs prives, jamais supprimes par le site) :
 
 ```json
 {
   "Version": "2012-10-17",
-  "Statement": [{
-    "Effect": "Allow",
-    "Action": ["s3:PutObject", "s3:DeleteObject"],
-    "Resource": "arn:aws:s3:::<BUCKET>/media/*"
-  }]
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:PutObject", "s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::<BUCKET>/media/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["s3:PutObject", "s3:GetObject"],
+      "Resource": "arn:aws:s3:::<BUCKET>/documents/*"
+    }
+  ]
 }
 ```
+
+   Important : la bucket policy de CloudFront ci-dessus doit rester limitee a `media/*`. Avec `/*`, CloudFront pourrait servir les documents prives.
 
 4. Renseigner `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` et `CLOUDFRONT_URL` (localement dans `.env.local`, sur Vercel dans les variables du projet). Ne jamais mettre ces cles dans le code ni dans un chat ; les renouveler en cas de fuite.
 5. `CLOUDFRONT_URL` est lue au demarrage et a la construction (`next.config.ts` autorise ce domaine pour `next/image`) : **redeployer apres l'avoir changee**.
 
 Sans cette configuration, l'admin affiche "Stockage d'images indisponible" et les illustrations dessinees restent utilisees. Les visuels du dossier `public/` fonctionnent toujours.
+
+### Documents prives (factures et avoirs)
+
+Le meme bucket archive les PDF sous `documents/invoices/<annee>/` et `documents/credit-notes/<annee>/` (cle avec suffixe aleatoire). Ils ne passent jamais par CloudFront : le site les lit lui-meme (requete S3 signee) apres avoir verifie le jeton de commande ou la session admin. Sans variables `S3_*`, les PDF sont regeneres a la demande depuis la base, a l'identique (les donnees vendeur et client sont figees dans la facture a l'emission). Activer le versioning du bucket est conseille.
 
 ## 7. Deploiement (Vercel)
 
@@ -152,24 +165,26 @@ Sans cette configuration, l'admin affiche "Stockage d'images indisponible" et le
 
 ## 8. Suivi de commande et e-mails
 
-1. Paiement confirme (webhook Stripe) : e-mail de confirmation au client (recapitulatif, droit de retractation, lien de suivi) et alerte a `ADMIN_EMAIL`.
-2. Expedition (bouton dans `/admin`, numero de suivi optionnel) : e-mail "commande expediee" avec le lien de suivi.
-3. Page de suivi `/commande/<jeton>` : le jeton est aleatoire (144 bits), unique par commande, envoye uniquement par e-mail. Elle affiche le statut, les pieces et le suivi du colis. Fonctionne sans compte client.
+1. Paiement confirme (webhook Stripe) : facture emise (numerotation continue `FA-AAAA-000001`), e-mail de confirmation au client avec la facture en PDF jointe, et alerte a `ADMIN_EMAIL`.
+2. Expedition (`/admin/commandes`, transporteur et numero de suivi) : e-mail "commande expediee" avec lien de suivi du transporteur. Livraison : e-mail "commande livree" avec le bordereau de retour.
+3. Page de suivi `/commande/<jeton>` : le jeton est aleatoire (144 bits), unique par commande, envoye uniquement par e-mail. Elle affiche le statut avec les dates, les pieces, la TVA, le suivi du colis, la facture, l'avoir et le bordereau de retour (PDF). Fonctionne sans compte client.
 4. Retour en stock : e-mail aux personnes inscrites sur la liste d'attente, avec lien de desinscription signe.
-5. Remboursement (bouton dans `/admin`) : e-mail de confirmation au client.
+5. Remboursement (bouton dans `/admin`) : un avoir `AV-AAAA-000001` est emis et joint a l'e-mail de remboursement.
 
 Statuts : paiement en attente, a expedier, expediee, livree, annulee, expiree, remboursement a faire, remboursee.
 
 ### Espace admin (`/admin`)
 
 - Indicateurs : CA 7 j / 30 j / total (TTC), commandes payees, panier moyen, a expedier, remboursements a faire, paiements en attente, ventes par piece, alertes de stock bas (3 pieces ou moins).
-- Commandes : filtres par statut, expedition avec numero de suivi, livraison, annulation des commandes non payees.
+- Commandes (`/admin/commandes`) : recherche (numero, nom, e-mail), filtres par statut, page detail par commande (articles, TVA, historique, notes internes jamais visibles du client), expedition avec transporteur et numero de suivi, livraison, annulation des commandes non payees.
+- Documents PDF d'une commande : facture, avoir, bon de preparation (colisage, sans prix) et bordereau de retour avec formulaire de retractation. Bouton "Emettre la facture" si une commande payee n'en a pas.
+- Societe et factures (`/admin/societe`) : raison sociale, SIRET, RCS, TVA intracommunautaire, adresses, mediateur, mentions de pied de facture, regime de TVA UE, et export CSV mensuel des factures et avoirs pour la comptabilite. Ces informations alimentent aussi les mentions legales et les CGV. Une facture emise n'est jamais modifiee ni supprimee (verrou en base).
 - Remboursement : bouton "Rembourser" (remboursement integral via Stripe, avec case "remettre en stock" si le retour est recu). Pour une commande payee, c'est la seule facon de l'annuler ; ne pas rembourser depuis le tableau de bord Stripe pour garder les statuts a jour.
 - Stock par taille, et liste d'attente : inscrits par piece et taille, bouton "Prevenir maintenant", retrait d'une adresse.
 - Pieces (`/admin/produits`) : creer une piece, modifier nom, prix, tailles, edition, matiere, description, couleurs et illustration, ordre d'affichage ; envoyer ou retirer une photo (PNG, JPEG ou WebP, 3 Mo max, stockee sur S3 et servie par CloudFront) ; archiver ou restaurer (une piece n'est jamais supprimee car les commandes y font reference). Le stock se regle depuis le tableau de bord.
 - Looks (dans `/admin/produits`, par piece, 8 max) : photos portees par lieu ou ambiance, ouvertes sur le site au clic sur la piece ou via « Voir les looks ». Titre, legende, ordre ; images stockees sur S3 sous `media/scene-<slug>/`. Specifications et prompts pour le generateur d'images : `docs/prompts-images.md`.
 - Contenu (`/admin/contenu`) : texte des pages Informations (CGV, livraison, retours, mentions, confidentialite, contact), creation de nouvelles pages, retour au texte d'origine, accroche sous le logo, logo (image ou logotype texte). Format des textes : `## Titre` ouvre une section, une ligne vide separe les paragraphes.
-- Source de verite : `src/lib/products.ts` et `src/lib/legal.ts` ne servent que de valeurs par defaut. Une modification faite dans l'admin (ligne en base de meme identifiant) remplace la valeur du code ; modifier ensuite le fichier du code n'a plus d'effet sur cette piece ou cette page. Coordonnees de la societe (`brand.ts`) : restent dans le code, car elles ont une portee legale.
+- Source de verite : `src/lib/products.ts` et `src/lib/legal.ts` ne servent que de valeurs par defaut. Une modification faite dans l'admin (ligne en base de meme identifiant) remplace la valeur du code ; modifier ensuite le fichier du code n'a plus d'effet sur cette piece ou cette page. Coordonnees de la societe : valeurs par defaut dans `brand.ts`, remplacees par `/admin/societe`.
 - Non inclus : taux de conversion et visites. Pour l'audience, ajouter un outil respectueux de la vie privee (Vercel Analytics ou Plausible).
 
 ### Agent et controles de securite (VS Code / Copilot)
@@ -191,7 +206,7 @@ Mesures en place :
 - Comptes clients : connexion par code a usage unique envoye par e-mail (pas de mot de passe a voler), reponses identiques que l'adresse existe ou non, limitation de debit par visiteur et par adresse, suppression du compte avec saisie de confirmation.
 - Anti-abus : limitation de debit sur la creation de commande (le stock est reserve 30 min) et sur la liste d'attente. Adresses IP et e-mails ne sont stockes que sous forme d'empreinte, purgee apres 2 jours.
 - En-tetes HTTP : HSTS, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, CSP (anti-framing, formulaires limites a notre domaine et Stripe).
-- Envois de photos : formats PNG/JPEG/WebP uniquement, type verifie sur le contenu du fichier, 3 Mo maximum, reserves a l'admin connecte (controle de l'origine de la requete en plus du cookie `SameSite=Strict`). Bucket S3 prive (lecture uniquement via CloudFront/OAC), compte IAM limite a `PutObject`/`DeleteObject` sur le prefixe `media/`.
+- Envois de photos : formats PNG/JPEG/WebP uniquement, type verifie sur le contenu du fichier, 3 Mo maximum, reserves a l'admin connecte (controle de l'origine de la requete en plus du cookie `SameSite=Strict`). Bucket S3 prive (lecture des images uniquement via CloudFront/OAC sur `media/*`), compte IAM limite a `PutObject`/`DeleteObject` sur `media/` et `PutObject`/`GetObject` sur `documents/`. Factures : numerotation sans trou, immuables (trigger SQL), coherence des montants verifiee avant emission, jamais emises avec des informations societe incompletes ; telechargement par jeton de suivi (limite a 30 documents par minute et par visiteur) ou session admin.
 - Secrets uniquement en variables d'environnement (`.env.local` ignore par git).
 
 A faire de votre cote :
@@ -206,14 +221,14 @@ A faire de votre cote :
 
 ## 10. A completer avant la mise en ligne
 
-- `src/lib/brand.ts` : raison sociale, forme juridique, RCCM, compte contribuable, TVA / OSS, adresse, telephone, directeur de publication, adresse de retour des colis, mediateur de la consommation, e-mail de contact.
+- `/admin/societe` : raison sociale, forme juridique, capital, SIRET, RCS, TVA intracommunautaire, adresse du siege, telephone, directeur de publication, adresse de retour des colis, mediateur de la consommation. Le champ `[...]` encore affiche signale ce qu'il reste a renseigner ; e-mail de contact dans `src/lib/brand.ts`.
 - `src/lib/products.ts` : valeurs par defaut des pieces (prix TTC, stocks initiaux, visuels). Apres le premier demarrage, gerer les pieces depuis `/admin/produits`.
 - `src/lib/shipping.ts` : frais et delais France / UE.
 - `src/lib/legal.ts` : textes par defaut (CGV, livraison, retractation, mentions, confidentialite), modifiables depuis `/admin/contenu`. A faire relire par un juriste.
 
 ## 11. Points d'attention
 
-- Expedier depuis la Cote d'Ivoire vers la France implique douane, TVA a l'importation et eventuellement le guichet OSS / IOSS : a valider avec un comptable ou un transitaire. Les prix affiches sont TTC.
+- Les ventes se font depuis la France (stock en France) vers la France et l'UE. Les prix affiches sont TTC et identiques partout ; la facture en extrait la TVA au taux du pays de livraison (guichet unique OSS, taux dans `src/lib/vat.ts`) ou au taux francais sous le seuil de 10 000 EUR de ventes UE (reglage dans `/admin/societe`). Verifier les taux et le regime avec un expert-comptable.
 - Un mediateur de la consommation est obligatoire pour vendre a des consommateurs en France.
 - Informer l'acheteur du droit de retractation de 14 jours (deja integre au parcours et aux CGV).
 - Les commandes peuvent se faire en invite ; un compte client est facultatif (`/compte`). Les commandes sont aussi suivies via `/commande/<jeton>` (lien envoye par e-mail).
@@ -221,5 +236,5 @@ A faire de votre cote :
 ## 12. Limites connues
 
 - Remboursements : integraux uniquement (pas de remboursement partiel) ; un remboursement fait depuis le tableau de bord Stripe n'est pas synchronise avec la commande.
-- Pas de calcul de TVA par pays (prix TTC unique) ni de frais de livraison au poids.
+- Les prix sont en euros entiers TTC et ne varient pas selon le pays (la TVA est deduite a la facturation) ; pas de frais de livraison au poids.
 - Livraison limitee a la France et a l'UE (deux zones forfaitaires).

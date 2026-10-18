@@ -2,10 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { TRACKING_PATTERN, carrierLabel, isCarrierId } from "@/lib/carriers";
 import { getAnyProduct } from "@/server/catalog";
 import { isAdmin } from "@/server/admin-auth";
 import { isAdminUser, sessionClient } from "@/server/auth";
-import { sendRefundEmail, sendShippedEmail } from "@/server/emails";
+import { sendDeliveredEmail, sendRefundEmail, sendShippedEmail, type MailDocument } from "@/server/emails";
+import { BillingIncompleteError } from "@/server/company";
+import { INVOICEABLE, getInvoiceForOrder, issueCreditNote, issueInvoice } from "@/server/invoices";
+import { logOrderEvent } from "@/server/order-events";
 import {
   cancelOrder,
   getOrderById,
@@ -50,11 +54,24 @@ export async function logout() {
 export async function shipOrder(formData: FormData) {
   await requireAdmin();
   const id = Number(formData.get("id"));
-  const tracking = String(formData.get("tracking") ?? "").trim().slice(0, 120) || null;
   if (!Number.isInteger(id)) return;
-  await setShipped(id, tracking);
+  const tracking = String(formData.get("tracking") ?? "").trim().slice(0, 40) || null;
+  const carrierInput = String(formData.get("carrier") ?? "");
+  const carrier = isCarrierId(carrierInput) ? carrierInput : null;
+  // Un numéro de suivi sert à fabriquer un lien : on refuse les valeurs douteuses.
+  if (tracking && !TRACKING_PATTERN.test(tracking)) {
+    redirect(`/admin/commandes/${id}?error=tracking`);
+  }
+  const before = await getOrderById(id);
+  if (!before || !(["confirmed", "shipped"] as string[]).includes(before.status)) return;
+  await setShipped(id, tracking, carrier);
   const order = await getOrderById(id);
-  if (order && order.status === "shipped") await sendShippedEmail(order);
+  if (order && order.status === "shipped") {
+    const detail = [carrierLabel(carrier), tracking].filter(Boolean).join(" · ") || null;
+    // Le client n'est prévenu qu'à la première expédition ; une mise à jour du suivi est seulement notée.
+    await logOrderEvent(id, "shipped", detail, "admin");
+    if (before.status === "confirmed") await sendShippedEmail(order);
+  }
   revalidatePath("/admin", "layout");
 }
 
@@ -62,7 +79,12 @@ export async function deliverOrder(formData: FormData) {
   await requireAdmin();
   const id = Number(formData.get("id"));
   if (!Number.isInteger(id)) return;
+  const before = await getOrderById(id);
+  if (!before || !(["confirmed", "shipped"] as string[]).includes(before.status)) return;
   await setDelivered(id);
+  await logOrderEvent(id, "delivered", null, "admin");
+  const order = await getOrderById(id);
+  if (order) await sendDeliveredEmail(order);
   revalidatePath("/admin", "layout");
 }
 
@@ -74,6 +96,7 @@ export async function cancelOrderAction(formData: FormData) {
   const order = await getOrderById(id);
   if (!order || order.payment_status === "paid") return;
   const lines = await cancelOrder(id);
+  await logOrderEvent(id, "cancelled", null, "admin");
   // Les pièces remises en stock peuvent débloquer des personnes en attente.
   for (const line of lines) await notifyWaitlist(line.slug, line.size);
   revalidatePath("/admin", "layout");
@@ -114,8 +137,65 @@ export async function refundOrderAction(formData: FormData) {
 
   const restocked = await markRefunded(id, refundRef, restockItems);
   for (const line of restocked) await notifyWaitlist(line.slug, line.size);
-  await sendRefundEmail(order);
+  await logOrderEvent(id, "refunded", restockItems ? "Pièces remises en stock" : null, "admin");
+
+  // Avoir : uniquement si une facture avait été émise ; un échec n'empêche pas d'informer le client.
+  let creditNote: MailDocument | null = null;
+  try {
+    const issued = await issueCreditNote(order);
+    if (issued) creditNote = { number: issued.number, pdf: issued.pdf };
+  } catch (error) {
+    console.error("[invoice] avoir impossible", error);
+    await logOrderEvent(id, "note", "Avoir non émis : à émettre depuis la commande");
+  }
+  await sendRefundEmail(order, creditNote);
   revalidatePath("/admin", "layout");
+}
+
+/** Note interne sur une commande (jamais visible par le client). */
+export async function addOrderNoteAction(formData: FormData) {
+  await requireAdmin();
+  const id = Number(formData.get("id"));
+  const note = String(formData.get("note") ?? "").trim().slice(0, 500);
+  if (!Number.isInteger(id) || !note || !(await getOrderById(id))) return;
+  await logOrderEvent(id, "note", note, "admin");
+  revalidatePath(`/admin/commandes/${id}`);
+}
+
+/** Émet la facture d'une commande payée qui n'en a pas (commande antérieure ou échec d'émission). */
+export async function issueInvoiceAction(formData: FormData) {
+  await requireAdmin();
+  const id = Number(formData.get("id"));
+  if (!Number.isInteger(id)) return;
+  const order = await getOrderById(id);
+  if (!order || order.payment_status !== "paid" || !INVOICEABLE.includes(order.status)) return;
+  try {
+    await issueInvoice(order);
+  } catch (error) {
+    console.error("[invoice] émission manuelle impossible", error);
+    redirect(`/admin/commandes/${id}?error=${error instanceof BillingIncompleteError ? "company" : "invoice"}`);
+  }
+  revalidatePath(`/admin/commandes/${id}`);
+  redirect(`/admin/commandes/${id}?notice=invoice`);
+}
+
+/** Émet l'avoir d'une commande remboursée qui n'en a pas (échec lors du remboursement). */
+export async function issueCreditNoteAction(formData: FormData) {
+  await requireAdmin();
+  const id = Number(formData.get("id"));
+  if (!Number.isInteger(id)) return;
+  const order = await getOrderById(id);
+  if (!order || order.status !== "refunded") return;
+  if (await getInvoiceForOrder(id, "credit_note")) return;
+  try {
+    const issued = await issueCreditNote(order);
+    if (issued) await sendRefundEmail(order, { number: issued.number, pdf: issued.pdf });
+  } catch (error) {
+    console.error("[invoice] avoir manuel impossible", error);
+    redirect(`/admin/commandes/${id}?error=invoice`);
+  }
+  revalidatePath(`/admin/commandes/${id}`);
+  redirect(`/admin/commandes/${id}?notice=credit_note`);
 }
 
 export async function removeWaitlistAction(formData: FormData) {

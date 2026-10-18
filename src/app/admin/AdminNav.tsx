@@ -22,6 +22,7 @@ export function AdminNav({
     { href: "/admin/commandes", label: "Commandes", badge: urgent, alert: refundNeeded > 0 },
     { href: "/admin/produits", label: "Pièces et stock" },
     { href: "/admin/contenu", label: "Contenu du site" },
+    { href: "/admin/societe", label: "Société et factures" },
   ];
   const isActive = (href: string) => (href === "/admin" ? pathname === href : pathname.startsWith(href));
 

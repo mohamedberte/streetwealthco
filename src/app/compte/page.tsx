@@ -5,6 +5,7 @@ import { PageShell } from "@/components/PageShell";
 import { formatPrice } from "@/lib/products";
 import { currentUser, isAdminUser } from "@/server/auth";
 import { supabaseConfigured } from "@/server/db";
+import { invoiceNumbersByOrder } from "@/server/invoices";
 import { listOrdersForUser, type OrderStatus } from "@/server/orders";
 import { deleteAccount, signOut } from "./actions";
 
@@ -86,6 +87,7 @@ export default async function AccountPage({ searchParams }: Props) {
 
   const admin = isAdminUser(user);
   const orders = await listOrdersForUser(user.id, user.email_confirmed_at ? (user.email ?? null) : null);
+  const invoices = await invoiceNumbersByOrder(orders.map((order) => order.id));
 
   return (
     <PageShell>
@@ -108,11 +110,25 @@ export default async function AccountPage({ searchParams }: Props) {
                   <span>
                     <span className="block font-serif text-lg">{order.number}</span>
                     <span className="block text-xs text-muted">
-                      {order.created_at.toLocaleDateString("fr-FR")} · {STATUS[order.status]}
+                      {order.created_at.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })} · {STATUS[order.status]}
                     </span>
                   </span>
                   <span>{formatPrice(order.total)}</span>
                 </Link>
+                {(invoices.get(order.id)?.invoice || invoices.get(order.id)?.creditNote) && (
+                  <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1 px-1 text-xs text-muted">
+                    {invoices.get(order.id)?.invoice && (
+                      <a href={`/commande/${order.token}/facture`} className="underline hover:text-brown">
+                        Facture {invoices.get(order.id)?.invoice} (PDF)
+                      </a>
+                    )}
+                    {invoices.get(order.id)?.creditNote && (
+                      <a href={`/commande/${order.token}/facture?type=avoir`} className="underline hover:text-brown">
+                        Avoir {invoices.get(order.id)?.creditNote} (PDF)
+                      </a>
+                    )}
+                  </p>
+                )}
               </li>
             ))}
           </ul>

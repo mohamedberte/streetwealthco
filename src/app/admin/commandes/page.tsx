@@ -3,11 +3,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { formatPrice } from "@/lib/products";
 import { countryName, zones } from "@/lib/shipping";
+import { carrierLabel } from "@/lib/carriers";
 import { isAdmin } from "@/server/admin-auth";
 import { listOrders, type Order, type OrderStatus } from "@/server/orders";
-import { cancelOrderAction, deliverOrder, refundOrderAction, shipOrder } from "../actions";
+import { cancelOrderAction } from "../actions";
 import { AdminTitle, Banner } from "../AdminHeader";
-import { btn, btnPrimary, card, input } from "../ui";
+import { btn, card, input } from "../ui";
+import { REFUNDABLE, Refund, STATUS, ShipForms, dateFr } from "./OrderForms";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -19,17 +21,6 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 
 const one = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
 
-const STATUS: Record<OrderStatus, string> = {
-  pending_payment: "Paiement en attente",
-  confirmed: "À expédier",
-  shipped: "Expédiée",
-  delivered: "Livrée",
-  cancelled: "Annulée",
-  expired: "Expirée",
-  refund_needed: "Remboursement à faire",
-  refunded: "Remboursée",
-};
-
 const FILTERS: { key: string; label: string }[] = [
   { key: "", label: "Toutes" },
   { key: "confirmed", label: "À expédier" },
@@ -40,39 +31,7 @@ const FILTERS: { key: string; label: string }[] = [
   { key: "refunded", label: "Remboursées" },
 ];
 
-const REFUNDABLE: OrderStatus[] = ["confirmed", "shipped", "delivered", "refund_needed"];
 const URGENT: OrderStatus[] = ["confirmed", "refund_needed"];
-
-const dateFr = (value: Date | string) =>
-  new Date(value).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" });
-
-function Refund({ order }: { order: Order }) {
-  return (
-    <details className="border-t border-border pt-4" open={order.status === "refund_needed"}>
-      <summary className="cursor-pointer text-[10px] uppercase tracking-[0.2em] text-muted hover:text-brown">
-        Rembourser le client
-      </summary>
-      <form action={refundOrderAction} className="mt-3 flex flex-col gap-3 text-sm">
-        <input type="hidden" name="id" value={order.id} />
-        <label className="flex items-start gap-2">
-          <input type="checkbox" name="confirm" value="yes" required className="mt-1" />
-          <span>Rembourser {formatPrice(order.total)} au client via Stripe (irréversible)</span>
-        </label>
-        {order.status !== "refund_needed" && (
-          <label className="flex items-start gap-2">
-            <input type="checkbox" name="restock" value="yes" className="mt-1" />
-            <span>Remettre les pièces en stock (retour reçu)</span>
-          </label>
-        )}
-        <div>
-          <button type="submit" className={btn}>
-            Confirmer le remboursement
-          </button>
-        </div>
-      </form>
-    </details>
-  );
-}
 
 function OrderCard({ order }: { order: Order }) {
   const urgent = URGENT.includes(order.status);
@@ -80,7 +39,11 @@ function OrderCard({ order }: { order: Order }) {
   return (
     <li className={`p-5 sm:p-6 ${card} ${urgent ? "border-gold" : ""}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <p className="font-serif text-xl">{order.number}</p>
+        <p className="font-serif text-xl">
+          <Link href={`/admin/commandes/${order.id}`} className="underline-offset-4 hover:underline">
+            {order.number}
+          </Link>
+        </p>
         <p className="text-sm">
           <span className="font-medium">{formatPrice(order.total)}</span>
           <span className="text-muted"> · {dateFr(order.created_at)}</span>
@@ -121,28 +84,11 @@ function OrderCard({ order }: { order: Order }) {
       </ul>
 
       {(order.status === "confirmed" || order.status === "shipped") && (
-        <div className="mt-5 flex flex-wrap items-end gap-3 border-t border-border pt-4">
-          <form action={shipOrder} className="flex flex-1 flex-wrap items-center gap-2">
-            <input type="hidden" name="id" value={order.id} />
-            <input
-              name="tracking"
-              defaultValue={order.tracking ?? ""}
-              placeholder="Numéro de suivi (facultatif)"
-              aria-label="Numéro de suivi"
-              className={`${input} min-w-48 flex-1`}
-            />
-            <button type="submit" className={order.status === "confirmed" ? btnPrimary : btn}>
-              {order.status === "confirmed" ? "Marquer expédiée" : "Mettre à jour le suivi"}
-            </button>
-          </form>
-          {order.status === "shipped" && (
-            <form action={deliverOrder}>
-              <input type="hidden" name="id" value={order.id} />
-              <button type="submit" className={btnPrimary}>
-                Marquer livrée
-              </button>
-            </form>
+        <div className="mt-5 border-t border-border pt-4">
+          {order.carrier && (
+            <p className="mb-3 text-xs text-muted">Transporteur : {carrierLabel(order.carrier)}</p>
           )}
+          <ShipForms order={order} />
         </div>
       )}
 
@@ -172,14 +118,31 @@ export default async function OrdersAdminPage({ searchParams }: Props) {
   const params = await searchParams;
   const statusParam = one(params.statut) ?? "";
   const status = FILTERS.some((f) => f.key === statusParam) && statusParam ? (statusParam as OrderStatus) : undefined;
-  const orders = await listOrders(60, status);
+  const search = (one(params.q) ?? "").slice(0, 60);
+  const orders = await listOrders(60, status, search);
 
   return (
     <>
       <AdminTitle title="Commandes" />
       <Banner notice={one(params.notice)} error={one(params.error)} field={one(params.field)} />
 
-      <ul className="mt-8 flex flex-wrap gap-2">
+      <form action="/admin/commandes" method="get" className="mt-8 flex flex-wrap gap-2">
+        {status && <input type="hidden" name="statut" value={status} />}
+        <input
+          type="search"
+          name="q"
+          defaultValue={search}
+          maxLength={60}
+          placeholder="Rechercher : numéro, nom ou e-mail"
+          aria-label="Rechercher une commande"
+          className={`${input} max-w-sm`}
+        />
+        <button type="submit" className={btn}>
+          Rechercher
+        </button>
+      </form>
+
+      <ul className="mt-5 flex flex-wrap gap-2">
         {FILTERS.map((f) => {
           const active = (f.key || undefined) === status;
           return (

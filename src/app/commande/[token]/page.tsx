@@ -4,10 +4,14 @@ import { ClearCart } from "@/components/ClearCart";
 import { CodeLogin } from "@/components/CodeLogin";
 import { PageShell } from "@/components/PageShell";
 import { brand } from "@/lib/brand";
+import { carrierLabel, trackingUrl } from "@/lib/carriers";
 import { formatPrice } from "@/lib/products";
-import { countryName, zones } from "@/lib/shipping";
+import { countryName, policy, zones } from "@/lib/shipping";
+import { formatCents, formatRate } from "@/lib/vat";
 import { currentUser } from "@/server/auth";
 import { supabaseConfigured } from "@/server/db";
+import { getInvoiceForOrder } from "@/server/invoices";
+import { firstEvent, listOrderEvents, publicEvents, type OrderEventType } from "@/server/order-events";
 import { getOrderByToken, type OrderStatus } from "@/server/orders";
 import { settlePayment } from "@/server/payments";
 
@@ -16,11 +20,17 @@ export const metadata: Metadata = { title: "Suivi de commande", robots: { index:
 
 type Props = { params: Promise<{ token: string }> };
 
-const STEPS: { status: OrderStatus; label: string }[] = [
-  { status: "confirmed", label: "Confirmée" },
-  { status: "shipped", label: "Expédiée" },
-  { status: "delivered", label: "Livrée" },
+const STEPS: { status: OrderStatus; label: string; event: OrderEventType }[] = [
+  { status: "confirmed", label: "Confirmée", event: "paid" },
+  { status: "shipped", label: "Expédiée", event: "shipped" },
+  { status: "delivered", label: "Livrée", event: "delivered" },
 ];
+
+const dateFr = (value: Date) =>
+  value.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Europe/Paris" });
+
+const docLink =
+  "inline-block border border-border px-4 py-2.5 text-[10px] uppercase tracking-[0.2em] hover:border-brown";
 
 export default async function OrderPage({ params }: Props) {
   const { token } = await params;
@@ -48,6 +58,21 @@ export default async function OrderPage({ params }: Props) {
   const refund = order.status === "refund_needed";
   const stepIndex = STEPS.findIndex((step) => step.status === order.status);
   const offerAccount = order.payment_status === "paid" && supabaseConfigured() && !(await currentUser());
+
+  const [events, invoice, creditNote] = await Promise.all([
+    listOrderEvents(order.id),
+    getInvoiceForOrder(order.id, "invoice"),
+    getInvoiceForOrder(order.id, "credit_note"),
+  ]);
+  const visible = publicEvents(events);
+  const hasInvoice = Boolean(invoice) || ["confirmed", "shipped", "delivered"].includes(order.status);
+  const canReturn = order.status === "shipped" || order.status === "delivered";
+  const deliveredAt = firstEvent(visible, "delivered")?.created_at;
+  const withdrawalEnd = deliveredAt
+    ? new Date(deliveredAt.getTime() + policy.withdrawalDays * 86_400_000)
+    : null;
+  const trackUrl = trackingUrl(order.carrier, order.tracking);
+  const carrier = carrierLabel(order.carrier);
 
   let headline = `Commande ${order.number}`;
   let message = "";
@@ -83,23 +108,37 @@ export default async function OrderPage({ params }: Props) {
 
       {stepIndex >= 0 && (
         <ol className="mt-10 flex gap-2">
-          {STEPS.map((step, i) => (
-            <li key={step.status} className="flex-1">
-              <div className={`h-px ${i <= stepIndex ? "bg-brown" : "bg-border"}`} />
-              <p
-                className={`mt-2 text-[10px] uppercase tracking-[0.2em] ${
-                  i <= stepIndex ? "text-brown" : "text-muted"
-                }`}
-              >
-                {step.label}
-              </p>
-            </li>
-          ))}
+          {STEPS.map((step, i) => {
+            const at = i <= stepIndex ? firstEvent(visible, step.event)?.created_at : undefined;
+            return (
+              <li key={step.status} className="flex-1">
+                <div className={`h-px ${i <= stepIndex ? "bg-brown" : "bg-border"}`} />
+                <p
+                  className={`mt-2 text-[10px] uppercase tracking-[0.2em] ${
+                    i <= stepIndex ? "text-brown" : "text-muted"
+                  }`}
+                >
+                  {step.label}
+                </p>
+                {at && <p className="mt-1 text-[11px] text-muted">{dateFr(at)}</p>}
+              </li>
+            );
+          })}
         </ol>
       )}
 
-      {order.tracking && (
-        <p className="mt-6 text-sm text-brown-soft">Suivi de livraison : {order.tracking}</p>
+      {(carrier || order.tracking) && (
+        <p className="mt-6 text-sm text-brown-soft">
+          Suivi de livraison{carrier ? ` (${carrier})` : ""} :{" "}
+          {order.tracking &&
+            (trackUrl ? (
+              <a href={trackUrl} className="underline" target="_blank" rel="noopener noreferrer">
+                {order.tracking}
+              </a>
+            ) : (
+              order.tracking
+            ))}
+        </p>
       )}
 
       <section className="mt-12 border-t border-border pt-8">
@@ -118,11 +157,50 @@ export default async function OrderPage({ params }: Props) {
             <span>{formatPrice(order.shipping)}</span>
           </li>
           <li className="flex justify-between gap-4 border-t border-border pt-3 font-medium">
-            <span>Total</span>
+            <span>Total TTC</span>
             <span>{formatPrice(order.total)}</span>
           </li>
+          {invoice && (
+            <li className="flex justify-between gap-4 text-xs text-muted">
+              <span>
+                dont TVA {formatRate(invoice.vat_rate)} ({countryName(invoice.country)})
+              </span>
+              <span>{formatCents(invoice.total_vat)}</span>
+            </li>
+          )}
         </ul>
       </section>
+
+      {(hasInvoice || creditNote || canReturn) && (
+        <section className="mt-10 border-t border-border pt-8">
+          <h2 className="text-[11px] uppercase tracking-[0.26em] text-gold">Documents</h2>
+          <div className="mt-4 flex flex-wrap gap-3">
+            {hasInvoice && (
+              <a href={`/commande/${token}/facture`} className={docLink}>
+                Facture{invoice ? ` ${invoice.number}` : ""} (PDF)
+              </a>
+            )}
+            {creditNote && (
+              <a href={`/commande/${token}/facture?type=avoir`} className={docLink}>
+                Avoir {creditNote.number} (PDF)
+              </a>
+            )}
+            {canReturn && (
+              <a href={`/commande/${token}/retour`} className={docLink}>
+                Bordereau de retour (PDF)
+              </a>
+            )}
+          </div>
+          {canReturn && (
+            <p className="mt-4 text-xs leading-relaxed text-muted">
+              {withdrawalEnd
+                ? `Vous pouvez vous rétracter jusqu'au ${dateFr(withdrawalEnd)}.`
+                : `Vous disposez de ${policy.withdrawalDays} jours à compter de la réception pour vous rétracter.`}{" "}
+              Le bordereau contient le formulaire de rétractation et l&apos;adresse de retour.
+            </p>
+          )}
+        </section>
+      )}
 
       {offerAccount && (
         <section className="mt-10 max-w-md border border-border bg-ivory p-5">

@@ -1,7 +1,8 @@
 import "server-only";
 import { cache } from "react";
 import { brand } from "@/lib/brand";
-import { legalPages, type LegalPage } from "@/lib/legal";
+import { buildLegalPages, type LegalPage } from "@/lib/legal";
+import { getCompany } from "./company";
 import { db, unwrap } from "./db";
 
 /**
@@ -65,15 +66,14 @@ export function serializeContent(sections: LegalPage["sections"]): string {
     .join("\n\n");
 }
 
-const defaultPages: SitePage[] = legalPages.map((page, index) => ({
-  ...page,
-  active: true,
-  position: (index + 1) * 10,
-  fromDb: false,
-  custom: false,
-}));
-
 async function loadPages(): Promise<SitePage[]> {
+  const defaultPages: SitePage[] = buildLegalPages(await getCompany()).map((page, index) => ({
+    ...page,
+    active: true,
+    position: (index + 1) * 10,
+    fromDb: false,
+    custom: false,
+  }));
   let rows: PageRow[];
   try {
     rows = unwrap<PageRow[]>(await db().from("site_pages").select("*"));
