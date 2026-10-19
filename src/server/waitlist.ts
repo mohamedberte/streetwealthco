@@ -1,6 +1,7 @@
 import "server-only";
+import { DROP_SIZE } from "@/lib/products";
 import { db, unwrap } from "./db";
-import { sendRestockEmail } from "./emails";
+import { sendDropEmail, sendRestockEmail } from "./emails";
 
 export async function addToWaitlist(slug: string, size: string, email: string) {
   unwrap(
@@ -69,6 +70,24 @@ export async function waitlistCounts(): Promise<Record<string, number>> {
     counts[key] = (counts[key] ?? 0) + 1;
   }
   return counts;
+}
+
+/**
+ * Prévient les inscrits « ouverture » d'une pièce dont la vente est ouverte.
+ * Le marquage « prévenu » est atomique : un second appel n'envoie rien de plus.
+ */
+export async function notifyDrop(slug: string) {
+  const rows = unwrap<{ email: string }[]>(
+    await db()
+      .from("waitlist")
+      .update({ notified_at: new Date().toISOString() })
+      .eq("slug", slug)
+      .eq("size", DROP_SIZE)
+      .is("notified_at", null)
+      .select("email"),
+  );
+  await Promise.all(rows.map((row) => sendDropEmail(row.email, slug)));
+  return rows.length;
 }
 
 /**

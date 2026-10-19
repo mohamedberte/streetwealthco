@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { formatPrice } from "@/lib/products";
+import { formatOpening } from "@/lib/paris";
+import { DROP_SIZE, formatPrice, isUpcoming } from "@/lib/products";
 import { isAdmin } from "@/server/admin-auth";
 import { getAllProducts } from "@/server/catalog";
 import { supabaseConfigured } from "@/server/db";
-import { dashboardStats, inventoryRows } from "@/server/orders";
+import { dailySales, dashboardStats, inventoryRows } from "@/server/orders";
 import { waitlistEntries } from "@/server/waitlist";
 import { login } from "./actions";
 import { AdminTitle } from "./AdminHeader";
@@ -102,23 +103,63 @@ export default async function AdminHome({ searchParams }: Props) {
     );
   }
 
-  const [stats, inventory, waiting, products] = await Promise.all([
+  const [stats, inventory, waiting, products, daily] = await Promise.all([
     dashboardStats(),
     inventoryRows(),
     waitlistEntries(),
     getAllProducts(),
+    dailySales(14),
   ]);
 
-  const lowStock = products
-    .filter((product) => product.active)
-    .flatMap((product) =>
-      product.sizes.filter((size) => {
-        const row = inventory.find((r) => r.slug === product.slug && r.size === size);
-        return (row ? Math.max(row.stock - row.reserved, 0) : 0) <= LOW_STOCK;
-      }),
-    ).length;
-  const pendingWaiting = waiting.filter((entry) => !entry.notified_at).length;
-  const nothing = stats.toShip + stats.refundNeeded + lowStock + pendingWaiting === 0;
+  const availableOf = (slug: string, size: string) => {
+    const row = inventory.find((r) => r.slug === slug && r.size === size);
+    return row ? Math.max(row.stock - row.reserved, 0) : 0;
+  };
+
+  // Pièces en vente dont une taille est presque épuisée.
+  const lowStockList = products
+    .filter((product) => product.active && !isUpcoming(product))
+    .map((product) => ({
+      product,
+      sizes: product.sizes
+        .map((size) => ({ size, left: availableOf(product.slug, size) }))
+        .filter((entry) => entry.left <= LOW_STOCK),
+    }))
+    .filter((entry) => entry.sizes.length > 0);
+  const lowStock = lowStockList.reduce((sum, entry) => sum + entry.sizes.length, 0);
+
+  const pending = waiting.filter((entry) => !entry.notified_at);
+  const pendingWaiting = pending.filter((entry) => entry.size !== DROP_SIZE).length;
+
+  // Alertes d'ouverture à envoyer : la vente est ouverte et des inscrits attendent.
+  const dropsToNotify = pending.filter((entry) => {
+    if (entry.size !== DROP_SIZE) return false;
+    const product = products.find((p) => p.slug === entry.slug);
+    return product !== undefined && !isUpcoming(product);
+  }).length;
+
+  const upcoming = products
+    .filter((product) => product.active && isUpcoming(product))
+    .sort((a, b) => Date.parse(a.opensAt!) - Date.parse(b.opensAt!));
+
+  // Tailles les plus demandées : inscrits en attente, par pièce et taille.
+  const demand = new Map<string, number>();
+  for (const entry of pending) {
+    if (entry.size === DROP_SIZE) continue;
+    const key = `${entry.slug}:${entry.size}`;
+    demand.set(key, (demand.get(key) ?? 0) + 1);
+  }
+  const topDemand = [...demand.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([key, count]) => {
+      const [slug, size] = key.split(":");
+      return { slug, size, count, name: products.find((p) => p.slug === slug)?.name ?? slug };
+    });
+
+  const today = daily[daily.length - 1];
+  const maxRevenue = Math.max(...daily.map((entry) => entry.revenue), 0);
+  const nothing = stats.toShip + stats.refundNeeded + lowStock + pendingWaiting + dropsToNotify === 0;
 
   return (
     <>
@@ -154,6 +195,15 @@ export default async function AdminHome({ searchParams }: Props) {
               plural="tailles en stock bas"
             />
           )}
+          {dropsToNotify > 0 && (
+            <Task
+              href="/admin/produits#attente"
+              count={dropsToNotify}
+              singular="alerte d'ouverture à envoyer"
+              plural="alertes d'ouverture à envoyer"
+              alert
+            />
+          )}
           {pendingWaiting > 0 && (
             <Task
               href="/admin/produits#attente"
@@ -175,6 +225,96 @@ export default async function AdminHome({ searchParams }: Props) {
           value={stats.paidOrders ? formatPrice(Math.round(stats.revenue / stats.paidOrders)) : "—"}
         />
       </div>
+
+      <h2 className={`mt-14 ${sectionTitle}`}>Activité — 14 jours</h2>
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <Figure
+          title="Ventes du jour"
+          value={formatPrice(today?.revenue ?? 0)}
+          hint={`${today?.orders ?? 0} commande${(today?.orders ?? 0) > 1 ? "s" : ""} payée${(today?.orders ?? 0) > 1 ? "s" : ""}`}
+        />
+        <Figure
+          title="14 derniers jours"
+          value={formatPrice(daily.reduce((sum, entry) => sum + entry.revenue, 0))}
+          hint={`${daily.reduce((sum, entry) => sum + entry.orders, 0)} commande(s)`}
+        />
+      </div>
+      <div className={`mt-3 p-5 ${card}`}>
+        <ol className="flex h-32 items-end gap-1.5" aria-label="Chiffre d'affaires par jour">
+          {daily.map((entry) => (
+            <li
+              key={entry.day}
+              className="flex h-full flex-1 flex-col items-center justify-end gap-1"
+              title={`${entry.day} : ${formatPrice(entry.revenue)} · ${entry.orders} commande(s)`}
+            >
+              <span
+                className={`w-full ${entry.revenue > 0 ? "bg-gold" : "bg-border"}`}
+                style={{ height: `${maxRevenue > 0 ? Math.max((entry.revenue / maxRevenue) * 100, 3) : 3}%` }}
+              />
+            </li>
+          ))}
+        </ol>
+        <ol className="mt-2 flex gap-1.5" aria-hidden>
+          {daily.map((entry) => (
+            <li key={entry.day} className="flex-1 text-center text-[10px] text-muted">
+              {entry.day.slice(8)}
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      {upcoming.length > 0 && (
+        <>
+          <h2 className={`mt-14 ${sectionTitle}`}>Prochaines ouvertures</h2>
+          <ul className={`mt-4 divide-y divide-border text-sm ${card}`}>
+            {upcoming.map((product) => (
+              <li key={product.slug} className="flex justify-between gap-4 px-5 py-3">
+                <span>{product.name}</span>
+                <span className="text-brown-soft">
+                  {formatOpening(product.opensAt!)} ·{" "}
+                  {pending.filter((e) => e.slug === product.slug && e.size === DROP_SIZE).length} alerte(s)
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      <h2 className={`mt-14 ${sectionTitle}`}>Stock à surveiller</h2>
+      {lowStockList.length === 0 ? (
+        <p className={`mt-4 p-5 text-sm text-brown-soft ${card}`}>Aucune taille en stock bas.</p>
+      ) : (
+        <ul className={`mt-4 divide-y divide-border text-sm ${card}`}>
+          {lowStockList.map(({ product, sizes }) => (
+            <li key={product.slug} className="flex flex-wrap justify-between gap-x-4 gap-y-1 px-5 py-3">
+              <Link href={`/admin/produits#p-${product.slug}`} className="underline-offset-4 hover:underline">
+                {product.name}
+              </Link>
+              <span className="text-brown-soft">
+                {sizes.map(({ size, left }) => `${size} : ${left === 0 ? "épuisé" : left}`).join(" · ")}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2 className={`mt-14 ${sectionTitle}`}>Tailles les plus demandées</h2>
+      {topDemand.length === 0 ? (
+        <p className={`mt-4 p-5 text-sm text-brown-soft ${card}`}>Aucune demande en liste d&apos;attente.</p>
+      ) : (
+        <ul className={`mt-4 divide-y divide-border text-sm ${card}`}>
+          {topDemand.map((row) => (
+            <li key={`${row.slug}:${row.size}`} className="flex justify-between gap-4 px-5 py-3">
+              <span>
+                {row.name} · {row.size}
+              </span>
+              <span className="text-brown-soft">
+                {row.count} en attente · {availableOf(row.slug, row.size)} dispo
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <h2 className={`mt-14 ${sectionTitle}`}>Ventes par pièce</h2>
       {stats.byProduct.length === 0 ? (

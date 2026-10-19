@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { formatPrice } from "@/lib/products";
+import { formatPrice, DROP_SIZE, isUpcoming } from "@/lib/products";
+import { formatOpening } from "@/lib/paris";
 import { isAdmin } from "@/server/admin-auth";
 import { getAllProducts, MAX_SCENES } from "@/server/catalog";
 import { inventoryRows } from "@/server/orders";
@@ -49,6 +50,10 @@ export default async function ProductsAdminPage({ searchParams }: Props) {
     waitingGroups.set(key, [...(waitingGroups.get(key) ?? []), entry]);
   }
 
+  // Duplication : le formulaire de création s'ouvre prérempli avec la pièce choisie.
+  const duplicateSlug = one(params.duplicate);
+  const template = duplicateSlug ? products.find((product) => product.slug === duplicateSlug) : undefined;
+
   return (
     <>
       <AdminTitle
@@ -57,10 +62,12 @@ export default async function ProductsAdminPage({ searchParams }: Props) {
       />
       <Banner notice={one(params.notice)} error={one(params.error)} field={one(params.field)} />
 
-      <details className={`mt-8 p-5 ${card}`}>
-        <summary className={`cursor-pointer ${sectionTitle}`}>+ Nouvelle pièce</summary>
+      <details id="nouvelle" open={Boolean(template)} className={`mt-8 p-5 ${card}`}>
+        <summary className={`cursor-pointer ${sectionTitle}`}>
+          {template ? `+ Nouvelle pièce, d'après « ${template.name} »` : "+ Nouvelle pièce"}
+        </summary>
         <div className="mt-5">
-          <ProductForm />
+          <ProductForm key={template?.slug ?? "new"} template={template} />
         </div>
       </details>
 
@@ -76,6 +83,17 @@ export default async function ProductsAdminPage({ searchParams }: Props) {
               <p className="text-sm text-brown-soft">
                 {formatPrice(product.price)} · {product.edition}
                 {!product.active && " · archivée"}
+                {product.opensAt &&
+                  (isUpcoming(product)
+                    ? ` · ouvre le ${formatOpening(product.opensAt)}`
+                    : ` · ouverte le ${formatOpening(product.opensAt)}`)}
+                {" · "}
+                <a
+                  href={`/admin/produits?duplicate=${product.slug}#nouvelle`}
+                  className="underline underline-offset-4 hover:text-brown"
+                >
+                  Dupliquer
+                </a>
               </p>
             </header>
 
@@ -313,7 +331,7 @@ export default async function ProductsAdminPage({ searchParams }: Props) {
       </h2>
       <p className="mt-2 text-xs text-muted">
         Les inscrits sont prévenus par e-mail, dans l&apos;ordre d&apos;inscription, dès que du stock est
-        disponible.
+        disponible ou que la vente d&apos;une pièce s&apos;ouvre.
       </p>
       {waitingGroups.size === 0 ? (
         <p className={`mt-4 p-5 text-sm text-brown-soft ${card}`}>Personne en attente.</p>
@@ -323,12 +341,16 @@ export default async function ProductsAdminPage({ searchParams }: Props) {
             const [slug, size] = key.split(":");
             const product = products.find((p) => p.slug === slug);
             const open = entries.filter((entry) => !entry.notified_at);
+            const isDrop = size === DROP_SIZE;
+            const canNotify =
+              open.length > 0 &&
+              (isDrop ? product !== undefined && !isUpcoming(product) : available(slug, size) > 0);
             return (
               <details key={key} className={`p-4 ${card}`} open={open.length > 0}>
                 <summary className="cursor-pointer text-sm">
-                  {product?.name ?? slug} · {size} — {open.length} en attente
+                  {product?.name ?? slug} · {isDrop ? "alerte d'ouverture" : size} — {open.length} en attente
                   {entries.length > open.length ? `, ${entries.length - open.length} prévenu(s)` : ""}
-                  {` · ${available(slug, size)} dispo`}
+                  {isDrop ? "" : ` · ${available(slug, size)} dispo`}
                 </summary>
                 <ul className="mt-3 divide-y divide-border text-sm">
                   {entries.map((entry) => (
@@ -349,12 +371,12 @@ export default async function ProductsAdminPage({ searchParams }: Props) {
                     </li>
                   ))}
                 </ul>
-                {open.length > 0 && available(slug, size) > 0 && (
+                {canNotify && (
                   <form action={notifyWaitlistAction} className="mt-3">
                     <input type="hidden" name="slug" value={slug} />
                     <input type="hidden" name="size" value={size} />
                     <button type="submit" className={btnPrimary}>
-                      Prévenir maintenant
+                      {isDrop ? "Prévenir de l'ouverture" : "Prévenir maintenant"}
                     </button>
                   </form>
                 )}

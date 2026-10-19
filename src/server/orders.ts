@@ -2,7 +2,8 @@ import "server-only";
 import { randomBytes } from "node:crypto";
 import { getProduct, type CatalogProduct } from "./catalog";
 import { policy, zones, type ZoneId } from "@/lib/shipping";
-import { roundMoney } from "@/lib/products";
+import { roundMoney, isUpcoming } from "@/lib/products";
+import { formatOpening, parisDayKey } from "@/lib/paris";
 import { DbError, db, unwrap } from "./db";
 import { SoldOutError, ensureDefaultInventory, type StockLine } from "./inventory";
 
@@ -85,6 +86,11 @@ async function normalize(items: NewOrder["items"]) {
     const product = catalog.get(item.slug) ?? (await getProduct(item.slug));
     if (!product || !product.sizes.includes(item.size)) {
       throw new OrderError("Une pièce de la sélection est inconnue.");
+    }
+    if (isUpcoming(product)) {
+      throw new OrderError(
+        `${product.name} ouvre à la vente le ${formatOpening(product.opensAt as string)}.`,
+      );
     }
     catalog.set(item.slug, product);
     const key = `${item.slug}:${item.size}`;
@@ -253,6 +259,35 @@ export async function dashboardStats(): Promise<Stats> {
     refundedTotal: Number(t.refunded_total),
     byProduct: t.by_product ?? [],
   };
+}
+
+export type DailySales = { day: string; revenue: number; orders: number };
+
+/** Ventes payées des `days` derniers jours (jours de Paris, du plus ancien à aujourd'hui, jours vides compris). */
+export async function dailySales(days = 14): Promise<DailySales[]> {
+  const since = new Date(Date.now() - (days + 1) * 86_400_000).toISOString();
+  const rows = unwrap<{ created_at: string; total: number }[]>(
+    await db()
+      .from("orders")
+      .select("created_at, total")
+      .eq("payment_status", "paid")
+      .in("status", ["confirmed", "shipped", "delivered"])
+      .gte("created_at", since)
+      .limit(5000),
+  );
+
+  const byDay = new Map<string, DailySales>();
+  for (let i = days - 1; i >= 0; i -= 1) {
+    const day = parisDayKey(Date.now() - i * 86_400_000);
+    byDay.set(day, { day, revenue: 0, orders: 0 });
+  }
+  for (const row of rows) {
+    const entry = byDay.get(parisDayKey(new Date(row.created_at)));
+    if (!entry) continue;
+    entry.revenue = roundMoney(entry.revenue + Number(row.total));
+    entry.orders += 1;
+  }
+  return [...byDay.values()];
 }
 
 /**

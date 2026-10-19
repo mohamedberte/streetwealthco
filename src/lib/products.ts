@@ -40,8 +40,10 @@ export type Product = {
   fabric: string;
   edition: string;
   sizes: string[];
-  /** Stock initial par taille (sert aussi à calculer la taille de l'édition). */
+  /** Stock initial par taille (graine uniquement : le stock réel est en base, par taille). */
   stockPerSize: number;
+  /** Ouverture à la vente (ISO, UTC). Absente = en vente immédiatement. */
+  opensAt?: string;
   kind: GarmentKind;
   tone: Tone;
   /**
@@ -168,13 +170,12 @@ export const products: Product[] = [
   },
 ];
 
-/** Édition limitée = toute pièce dont l'édition n'est pas « Permanente ». */
-export function isLimited(product: Product) {
-  return product.edition !== "Permanente";
-}
+/** Pseudo-taille de la liste d'attente : alerte « prévenez-moi à l'ouverture de la vente ». */
+export const DROP_SIZE = "ouverture";
 
-export function editionTotal(product: Product) {
-  return product.stockPerSize * product.sizes.length;
+/** Vrai tant que la pièce n'est pas ouverte à la vente (`now` en ms, par défaut l'heure courante). */
+export function isUpcoming(product: Pick<Product, "opensAt">, now = Date.now()) {
+  return Boolean(product.opensAt) && Date.parse(product.opensAt as string) > now;
 }
 
 /** Arrondit un montant en euros au centime (évite 89.97000000000001 après une somme). */

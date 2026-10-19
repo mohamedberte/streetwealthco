@@ -36,6 +36,7 @@ type Row = {
   tone_accent: string | null;
   image: string | null;
   active: boolean;
+  opens_at?: string | null;
 };
 
 type SceneRow = {
@@ -78,6 +79,7 @@ function fromRow(row: Row): CatalogProduct {
       ...(row.tone_accent ? { accent: row.tone_accent } : {}),
     },
     image: row.image ?? undefined,
+    opensAt: row.opens_at ? new Date(row.opens_at).toISOString() : undefined,
     active: row.active,
     position: Number(row.position),
     fromDb: true,
@@ -163,6 +165,7 @@ async function upsert(product: CatalogProduct) {
           tone_line: product.tone.line,
           tone_accent: product.tone.accent ?? null,
           image: product.image ?? null,
+          opens_at: product.opensAt ?? null,
           active: product.active,
           updated_at: new Date().toISOString(),
         },
@@ -197,7 +200,15 @@ export async function createProduct(slug: string, fields: ProductFields, positio
 export async function updateProduct(slug: string, fields: ProductFields, position: number) {
   const current = await getAnyProduct(slug);
   if (!current) throw new Error("Pièce introuvable.");
-  const product: CatalogProduct = { ...current, ...fields, slug, position, fromDb: true };
+  // `stockPerSize` n'est qu'un stock initial : le stock réel se gère par taille (table `inventory`).
+  const product: CatalogProduct = {
+    ...current,
+    ...fields,
+    stockPerSize: current.stockPerSize,
+    slug,
+    position,
+    fromDb: true,
+  };
   await upsert(product);
   // Nouvelles tailles : stock à 0 (à renseigner ensuite dans « Stock »).
   await ensureInventory(product, 0);

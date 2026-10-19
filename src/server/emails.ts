@@ -1,7 +1,7 @@
 import "server-only";
 import { brand } from "@/lib/brand";
 import { carrierLabel, trackingUrl } from "@/lib/carriers";
-import { formatPrice } from "@/lib/products";
+import { DROP_SIZE, formatPrice } from "@/lib/products";
 import { getAnyProduct } from "./catalog";
 import { countryName, policy, zones } from "@/lib/shipping";
 import { sendMail } from "./mail";
@@ -112,6 +112,22 @@ export async function sendRestockEmail(email: string, slug: string, size: string
     html: layout(
       "De nouveau disponible",
       `<p style="font-size:14px;">${escape(product.name)} en taille ${escape(size)} est de nouveau disponible. Les pièces sont attribuées dans l'ordre d'inscription, dans la limite du stock.</p>
+<p style="margin:24px 0 0;"><a href="${siteUrl()}/?piece=${product.slug}" style="color:#A9844F;">Voir la pièce</a></p>
+<p style="margin:24px 0 0;font-size:11px;color:#75685D;"><a href="${unsubscribe}" style="color:#75685D;">Ne plus recevoir cette alerte</a></p>`,
+    ),
+  });
+}
+
+export async function sendDropEmail(email: string, slug: string) {
+  const product = await getAnyProduct(slug);
+  if (!product) return;
+  const unsubscribe = `${siteUrl()}/api/waitlist/unsubscribe?e=${encodeURIComponent(email)}&p=${encodeURIComponent(slug)}&s=${DROP_SIZE}&t=${unsubscribeToken(email, slug, DROP_SIZE)}`;
+  await sendMail({
+    to: email,
+    subject: `${product.name} — la vente est ouverte`,
+    html: layout(
+      "La vente est ouverte",
+      `<p style="font-size:14px;">${escape(product.name)} est désormais disponible. Les quantités sont limitées.</p>
 <p style="margin:24px 0 0;"><a href="${siteUrl()}/?piece=${product.slug}" style="color:#A9844F;">Voir la pièce</a></p>
 <p style="margin:24px 0 0;font-size:11px;color:#75685D;"><a href="${unsubscribe}" style="color:#75685D;">Ne plus recevoir cette alerte</a></p>`,
     ),

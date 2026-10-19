@@ -71,3 +71,71 @@ body {
   outline: 1px solid currentColor;
   outline-offset: 4px;
 }
+
+/* Mouvements doux : courbe lente en fin de course, jamais de rebond */
+@keyframes tx-digit-in {
+  from {
+    opacity: 0;
+    transform: translateY(-55%);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes tx-digit-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(55%);
+    filter: blur(2px);
+  }
+}
+
+@keyframes tx-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tx-digit-in {
+  animation: tx-digit-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.tx-digit-out {
+  position: absolute;
+  inset: 0;
+  animation: tx-digit-out 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.tx-rise {
+  animation: tx-rise 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.tx-pop {
+  animation: tx-rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tx-digit-in,
+  .tx-rise,
+  .tx-pop {
+    animation: none;
+  }
+
+  .tx-digit-out {
+    display: none;
+  }
+}

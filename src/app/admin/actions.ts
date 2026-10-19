@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { TRACKING_PATTERN, carrierLabel, isCarrierId } from "@/lib/carriers";
+import { DROP_SIZE, isUpcoming } from "@/lib/products";
 import { getAnyProduct } from "@/server/catalog";
 import { isAdmin } from "@/server/admin-auth";
 import { isAdminUser, sessionClient } from "@/server/auth";
@@ -20,7 +21,7 @@ import {
 } from "@/server/orders";
 import { clientKey, isLimited, recordEvent } from "@/server/rate-limit";
 import { refundPayment } from "@/server/stripe";
-import { notifyWaitlist, removeWaitlistEntry } from "@/server/waitlist";
+import { notifyDrop, notifyWaitlist, removeWaitlistEntry } from "@/server/waitlist";
 
 async function requireAdmin() {
   if (!(await isAdmin())) redirect("/admin");
@@ -211,7 +212,14 @@ export async function notifyWaitlistAction(formData: FormData) {
   const slug = String(formData.get("slug") ?? "");
   const size = String(formData.get("size") ?? "");
   const product = await getAnyProduct(slug);
-  if (!product || !product.sizes.includes(size)) return;
-  await notifyWaitlist(slug, size);
+  if (!product) return;
+  if (size === DROP_SIZE) {
+    // Alerte d'ouverture : uniquement une fois la vente ouverte.
+    if (isUpcoming(product)) return;
+    await notifyDrop(slug);
+  } else {
+    if (!product.sizes.includes(size)) return;
+    await notifyWaitlist(slug, size);
+  }
   revalidatePath("/admin", "layout");
 }

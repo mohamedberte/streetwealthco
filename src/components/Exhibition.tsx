@@ -6,13 +6,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { CartButton } from "@/components/CartDrawer";
 import { useCart } from "@/components/CartProvider";
+import { DropAlert, DropStatus } from "@/components/Drop";
 import { Garment } from "@/components/Garment";
 import { InfoPanel } from "@/components/InfoPanel";
 import { Logo } from "@/components/Logo";
 import { Lookbook } from "@/components/Lookbook";
 import { Reserve } from "@/components/Reserve";
 import { ShareButton } from "@/components/ShareButton";
-import { editionTotal, formatPrice, isLimited, type Product } from "@/lib/products";
+import { formatPrice, type Product } from "@/lib/products";
 
 export type Availability = Record<string, Record<string, number>>;
 
@@ -31,6 +32,7 @@ export function Exhibition({
   pages,
   tagline,
   logoUrl,
+  serverNow,
 }: {
   /** Catalogue actif (non vide), dans l'ordre d'affichage. */
   products: Product[];
@@ -39,6 +41,8 @@ export function Exhibition({
   pages: { slug: string; title: string }[];
   tagline: string;
   logoUrl?: string | null;
+  /** Heure du serveur (ms) : base du compte à rebours des pièces pas encore ouvertes. */
+  serverNow: number;
 }) {
   const COUNT = products.length;
   const initialIndex = Math.max(
@@ -482,17 +486,11 @@ export function Exhibition({
                 {formatPrice(product.price)}
                 <span className="opacity-60"> · Édition {product.edition}</span>
               </p>
-              <Gauge product={product} avail={avail[product.slug]} />
-              {product.scenes && product.scenes.length > 0 && (
-                <button
-                  type="button"
-                  data-reveal
-                  onClick={() => setLookbookOpen(true)}
-                  className="mt-4 text-[10px] uppercase tracking-[0.26em] underline decoration-current/40 underline-offset-8 transition-opacity hover:decoration-current"
-                >
-                  Voir les looks · {product.scenes.length}
-                </button>
-              )}
+              <DropStatus
+                opensAt={product.opensAt}
+                serverNow={serverNow}
+                fallback={<Gauge avail={avail[product.slug]} />}
+              />
               <ShareButton slug={product.slug} name={product.name} />
             </div>
 
@@ -510,13 +508,15 @@ export function Exhibition({
                 {product.fabric}
               </p>
               <div data-reveal>
-                <Reserve
-                  slug={product.slug}
-                  name={product.name}
-                  price={product.price}
-                  sizes={product.sizes}
-                  available={avail[product.slug] ?? {}}
-                />
+                <DropAlert slug={product.slug} opensAt={product.opensAt} serverNow={serverNow}>
+                  <Reserve
+                    slug={product.slug}
+                    name={product.name}
+                    price={product.price}
+                    sizes={product.sizes}
+                    available={avail[product.slug] ?? {}}
+                  />
+                </DropAlert>
               </div>
             </div>
           </div>
@@ -594,39 +594,21 @@ export function Exhibition({
   );
 }
 
-/** Jauge de rareté : pièces restantes sur la taille de l'édition. */
-function Gauge({
-  product,
-  avail,
-}: {
-  product: Product;
-  avail?: Record<string, number>;
-}) {
+/** Pièces restantes, toutes tailles confondues (stock réel, réservations déduites). */
+function Gauge({ avail }: { avail?: Record<string, number> }) {
   if (!avail) return null;
   const left = Object.values(avail).reduce((sum, n) => sum + n, 0);
-  const total = editionTotal(product);
-  const limited = isLimited(product);
 
   const text =
     left === 0
       ? "Épuisé"
       : left <= 5
         ? `Dernières pièces · ${left}`
-        : limited
-          ? `Il reste ${left} pièces sur ${total}`
-          : "Disponible";
+        : `Il reste ${left} pièces`;
 
   return (
-    <div data-reveal className="mt-3 w-56">
-      {limited && (
-        <div className="h-px w-full bg-current/25">
-          <div
-            className="h-px bg-current transition-[width] duration-700"
-            style={{ width: `${Math.min(100, (left / total) * 100)}%` }}
-          />
-        </div>
-      )}
-      <p className="mt-2 text-[10px] uppercase tracking-[0.26em] opacity-70">{text}</p>
-    </div>
+    <p data-reveal className="mt-3 text-[11px] uppercase tracking-[0.26em] opacity-85">
+      {text}
+    </p>
   );
 }

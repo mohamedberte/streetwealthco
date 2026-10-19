@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { garmentKinds, roundMoney, type GarmentKind } from "@/lib/products";
+import { parisLocalToIso } from "@/lib/paris";
 import { isAdmin } from "@/server/admin-auth";
 import {
   createProduct,
@@ -43,7 +44,7 @@ const productSchema = z.object({
   price: z.coerce.number().min(0).max(10_000).transform(roundMoney),
   description: z.string().trim().max(600),
   fabric: z.string().trim().max(80),
-  edition: z.string().trim().min(1).max(40),
+  edition: z.string().trim().max(40),
   sizes: z
     .string()
     .max(160)
@@ -51,7 +52,7 @@ const productSchema = z.object({
       [...new Set(value.split(",").map((size) => size.trim()).filter(Boolean))],
     )
     .pipe(z.array(z.string().regex(/^[A-Za-z0-9+. -]{1,12}$/)).min(1).max(12)),
-  stockPerSize: z.coerce.number().int().min(0).max(10_000),
+  stockPerSize: z.coerce.number().int().min(0).max(10_000).optional(),
   kind: z.enum(garmentKinds as [GarmentKind, ...GarmentKind[]]),
   bg: hex,
   ink: hex,
@@ -61,7 +62,7 @@ const productSchema = z.object({
   position: z.coerce.number().int().min(0).max(100_000).optional(),
 });
 
-function parseProduct(formData: FormData) {
+function parseProduct(formData: FormData, create: boolean) {
   const raw = Object.fromEntries(
     [
       "name",
@@ -72,7 +73,6 @@ function parseProduct(formData: FormData) {
       "fabric",
       "edition",
       "sizes",
-      "stockPerSize",
       "kind",
       "bg",
       "ink",
@@ -82,11 +82,24 @@ function parseProduct(formData: FormData) {
     ].map((name) => [name, text(formData, name)]),
   );
   const position = text(formData, "position").trim();
-  const parsed = productSchema.safeParse({ ...raw, position: position === "" ? undefined : position });
+  // Le stock initial n'existe qu'à la création ; ensuite, il se gère par taille.
+  const stock = create ? text(formData, "stockPerSize").trim() : "";
+  const parsed = productSchema.safeParse({
+    ...raw,
+    position: position === "" ? undefined : position,
+    stockPerSize: create ? stock : undefined,
+  });
   if (!parsed.success) {
     return { ok: false as const, field: String(parsed.error.issues[0]?.path[0] ?? "form") };
   }
   const data = parsed.data;
+  if (create && data.stockPerSize === undefined) return { ok: false as const, field: "stockPerSize" };
+  if (!create && data.edition === "") return { ok: false as const, field: "edition" };
+  // Ouverture programmée (heure de Paris) ; vide = en vente immédiatement.
+  const opensLocal = text(formData, "opensAt").trim();
+  const opensAt = opensLocal ? parisLocalToIso(opensLocal) : undefined;
+  if (opensAt === null) return { ok: false as const, field: "opensAt" };
+  const stockPerSize = data.stockPerSize ?? 0;
   const fields: ProductFields = {
     name: data.name,
     word: data.word.toUpperCase(),
@@ -94,9 +107,11 @@ function parseProduct(formData: FormData) {
     price: data.price,
     description: data.description,
     fabric: data.fabric,
-    edition: data.edition,
+    // Édition laissée vide à la création : calculée d'après le stock initial, pour rester cohérente.
+    edition: data.edition || `${stockPerSize * data.sizes.length} pièces`,
     sizes: data.sizes,
-    stockPerSize: data.stockPerSize,
+    stockPerSize,
+    opensAt,
     kind: data.kind,
     tone: {
       bg: data.bg,
@@ -113,7 +128,7 @@ function parseProduct(formData: FormData) {
 export async function saveProductAction(formData: FormData) {
   await requireAdmin();
   const create = formData.get("mode") === "create";
-  const parsed = parseProduct(formData);
+  const parsed = parseProduct(formData, create);
   if (!parsed.ok) redirect(`/admin/produits?error=invalid&field=${parsed.field}`);
 
   let slug: string;

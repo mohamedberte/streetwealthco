@@ -1,4 +1,5 @@
 import { garmentKinds } from "@/lib/products";
+import { isoToParisLocal } from "@/lib/paris";
 import type { CatalogProduct } from "@/server/catalog";
 import { saveProductAction } from "./content-actions";
 import { btn, input, label } from "./ui";
@@ -28,10 +29,20 @@ function Field({ name, title, children }: { name: string; title: string; childre
   );
 }
 
-/** Formulaire de création (sans `product`) ou de modification d'une pièce. */
-export function ProductForm({ product }: { product?: CatalogProduct }) {
+/**
+ * Formulaire de création (sans `product`) ou de modification d'une pièce.
+ * `template` préremplit la création avec les informations d'une pièce existante (duplication).
+ */
+export function ProductForm({
+  product,
+  template,
+}: {
+  product?: CatalogProduct;
+  template?: CatalogProduct;
+}) {
   const id = product?.slug ?? "new";
-  const tone = product?.tone ?? BLANK.tone;
+  const source = product ?? template;
+  const tone = source?.tone ?? BLANK.tone;
   const color = (name: "bg" | "ink" | "fill" | "line", title: string) => (
     <div>
       <label htmlFor={`${id}-${name}`} className={label}>
@@ -53,10 +64,17 @@ export function ProductForm({ product }: { product?: CatalogProduct }) {
       {product && <input type="hidden" name="slug" value={product.slug} />}
 
       <Field name={`${id}-name`} title="Nom">
-        <input id={`${id}-name`} name="name" required maxLength={80} defaultValue={product?.name} className={input} />
+        <input
+          id={`${id}-name`}
+          name="name"
+          required
+          maxLength={80}
+          defaultValue={template ? `${template.name} (copie)` : product?.name}
+          className={input}
+        />
       </Field>
       <Field name={`${id}-word`} title="Mot géant (fond de scène)">
-        <input id={`${id}-word`} name="word" required maxLength={24} defaultValue={product?.word} className={input} />
+        <input id={`${id}-word`} name="word" required maxLength={24} defaultValue={source?.word} className={input} />
       </Field>
       <Field name={`${id}-silhouette`} title="Silhouette (ex. Hoodie)">
         <input
@@ -64,7 +82,7 @@ export function ProductForm({ product }: { product?: CatalogProduct }) {
           name="silhouette"
           required
           maxLength={40}
-          defaultValue={product?.silhouette}
+          defaultValue={source?.silhouette}
           className={input}
         />
       </Field>
@@ -77,22 +95,26 @@ export function ProductForm({ product }: { product?: CatalogProduct }) {
           max={10000}
           step={0.01}
           required
-          defaultValue={product?.price}
+          defaultValue={source?.price}
           className={input}
         />
       </Field>
-      <Field name={`${id}-edition`} title="Édition (ex. « 80 pièces » ou « Permanente »)">
+      <Field
+        name={`${id}-edition`}
+        title={product ? "Édition (« 80 pièces » ou « Permanente »)" : "Édition (vide = « N pièces » d'après le stock, ou « Permanente »)"}
+      >
         <input
           id={`${id}-edition`}
           name="edition"
-          required
+          required={Boolean(product)}
           maxLength={40}
-          defaultValue={product?.edition ?? "Permanente"}
+          defaultValue={product ? product.edition : template?.edition === "Permanente" ? "Permanente" : ""}
+          placeholder={product ? undefined : "auto"}
           className={input}
         />
       </Field>
       <Field name={`${id}-fabric`} title="Matière">
-        <input id={`${id}-fabric`} name="fabric" maxLength={80} defaultValue={product?.fabric} className={input} />
+        <input id={`${id}-fabric`} name="fabric" maxLength={80} defaultValue={source?.fabric} className={input} />
       </Field>
       <Field name={`${id}-sizes`} title="Tailles (séparées par des virgules)">
         <input
@@ -100,26 +122,26 @@ export function ProductForm({ product }: { product?: CatalogProduct }) {
           name="sizes"
           required
           maxLength={160}
-          defaultValue={product?.sizes.join(", ") ?? "XS, S, M, L, XL"}
+          defaultValue={source?.sizes.join(", ") ?? "XS, S, M, L, XL"}
           className={input}
         />
       </Field>
-      <Field
-        name={`${id}-stockPerSize`}
-        title={product ? "Taille de l'édition (par taille)" : "Stock initial (par taille)"}
-      >
-        <input
-          id={`${id}-stockPerSize`}
-          name="stockPerSize"
-          type="number"
-          min={0}
-          max={10000}
-          step={1}
-          required
-          defaultValue={product?.stockPerSize ?? 10}
-          className={input}
-        />
-      </Field>
+      {/* Une seule quantité, à la création : ensuite le stock se gère par taille (« Stock par taille »). */}
+      {!product && (
+        <Field name={`${id}-stockPerSize`} title="Stock initial (identique pour chaque taille)">
+          <input
+            id={`${id}-stockPerSize`}
+            name="stockPerSize"
+            type="number"
+            min={0}
+            max={10000}
+            step={1}
+            required
+            defaultValue={source?.stockPerSize ?? 10}
+            className={input}
+          />
+        </Field>
+      )}
       <div className="sm:col-span-2">
         <Field name={`${id}-description`} title="Description">
           <textarea
@@ -127,14 +149,14 @@ export function ProductForm({ product }: { product?: CatalogProduct }) {
             name="description"
             rows={3}
             maxLength={600}
-            defaultValue={product?.description}
+            defaultValue={source?.description}
             className={input}
           />
         </Field>
       </div>
 
       <Field name={`${id}-kind`} title="Illustration (si pas de photo)">
-        <select id={`${id}-kind`} name="kind" defaultValue={product?.kind ?? BLANK.kind} className={input}>
+        <select id={`${id}-kind`} name="kind" defaultValue={source?.kind ?? BLANK.kind} className={input}>
           {garmentKinds.map((kind) => (
             <option key={kind} value={kind}>
               {KIND_LABELS[kind] ?? kind}
@@ -152,6 +174,15 @@ export function ProductForm({ product }: { product?: CatalogProduct }) {
           step={1}
           defaultValue={product?.position}
           placeholder="à la fin"
+          className={input}
+        />
+      </Field>
+      <Field name={`${id}-opensAt`} title="Ouverture à la vente (heure de Paris ; vide = en vente dès maintenant)">
+        <input
+          id={`${id}-opensAt`}
+          name="opensAt"
+          type="datetime-local"
+          defaultValue={product?.opensAt ? isoToParisLocal(product.opensAt) : ""}
           className={input}
         />
       </Field>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Exhibition, type Availability } from "@/components/Exhibition";
 import { PageShell } from "@/components/PageShell";
 import { brand } from "@/lib/brand";
-import { formatPrice, type Product } from "@/lib/products";
+import { formatPrice, isUpcoming, type Product } from "@/lib/products";
 import { getCatalog, getProduct } from "@/server/catalog";
 import { getPages, getSettings } from "@/server/content";
 import { getAvailability } from "@/server/inventory";
@@ -98,9 +98,11 @@ export default async function Home({ searchParams }: Props) {
           url: `${base}/?piece=${piece.slug}`,
           priceCurrency: "EUR",
           price: piece.price,
-          availability: Object.values(availability[piece.slug] ?? {}).some((qty) => qty > 0)
-            ? "https://schema.org/InStock"
-            : "https://schema.org/OutOfStock",
+          availability: isUpcoming(piece)
+            ? "https://schema.org/PreOrder"
+            : Object.values(availability[piece.slug] ?? {}).some((qty) => qty > 0)
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
         },
       }
     : {
@@ -122,6 +124,7 @@ export default async function Home({ searchParams }: Props) {
         pages={pages.map(({ slug, title }) => ({ slug, title }))}
         tagline={settings.tagline}
         logoUrl={settings.logoUrl}
+        serverNow={Date.now()}
       />
     </>
   );

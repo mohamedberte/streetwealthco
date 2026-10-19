@@ -7,7 +7,7 @@ Deux types de visuels :
 | Type | Où il apparaît | Dans l'admin |
 | --- | --- | --- |
 | **A. Visuel carrousel** (pièce détourée) | Scène plein écran de la pièce, devant le mot géant | `/admin/produits` > pièce > **Photo** |
-| **B. Looks** (pièce portée, lieux différents) | Clic sur la pièce ou « Voir les looks » : galerie plein écran animée | `/admin/produits` > pièce > **Looks** (8 maximum) |
+| **B. Looks** (pièce portée, lieux différents) | Clic sur la pièce : galerie plein écran animée | `/admin/produits` > pièce > **Looks** (8 maximum) |
 
 Le site fournit le mouvement (flottement, parallaxe, zoom lent, voile entre les looks). Il suffit de générer de **belles images fixes**, bien cadrées.
 
@@ -182,4 +182,4 @@ Contraste : le visuel carrousel doit se détacher du fond de la scène. Si la pi
 2. `/admin/produits` > ouvrir la pièce.
 3. **Photo** : envoyer le PNG transparent (visuel carrousel).
 4. **Looks** : pour chaque scène, saisir le titre (lieu ou ambiance), la légende, choisir le fichier puis « Ajouter le look ». L'ordre se règle avec le champ « Ordre ».
-5. Sur le site, cliquer sur la pièce (ou « Voir les looks ») pour contrôler le rendu sur ordinateur et sur téléphone.
+5. Sur le site, cliquer sur la pièce pour contrôler le rendu sur ordinateur et sur téléphone.

@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { DROP_SIZE, isUpcoming } from "@/lib/products";
 import { getAnyProduct, getProduct } from "@/server/catalog";
 import { euCountryCodes, policy, zoneIds, zones, type ZoneId } from "@/lib/shipping";
 import { siteUrl } from "@/server/emails";
@@ -162,7 +163,9 @@ export async function joinWaitlist(raw: unknown): Promise<{ ok: boolean; error?:
   }
   const { slug, size, email } = parsed.data;
   const product = await getProduct(slug);
-  if (!product || !product.sizes.includes(size)) {
+  const validSize =
+    size === DROP_SIZE ? Boolean(product && isUpcoming(product)) : Boolean(product?.sizes.includes(size));
+  if (!product || !validSize) {
     return { ok: false, error: "Pièce inconnue." };
   }
   try {
