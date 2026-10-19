@@ -98,9 +98,9 @@ export function DropStatus({
       <time dateTime={opensAt} className="sr-only">
         {formatOpening(opensAt)}
       </time>
-      <div aria-hidden className="mt-4 flex items-start gap-5 font-serif text-4xl leading-none sm:gap-7 sm:text-5xl">
+      <div aria-hidden className="mt-4 flex items-start gap-3 font-serif text-3xl leading-none sm:gap-7 sm:text-5xl">
         {segments(remaining).map(({ value, label }, index) => (
-          <div key={label} className="flex items-start gap-5 sm:gap-7">
+          <div key={label} className="flex items-start gap-3 sm:gap-7">
             {index > 0 && <span className="mt-1 h-8 w-px bg-current opacity-20 sm:h-10" />}
             <div>
               <div>

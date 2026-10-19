@@ -44,16 +44,16 @@ export default async function InfoPage({ params }: Props) {
 
   return (
     <PageShell wide>
-      <div className="grid gap-10 md:grid-cols-[13rem_1fr] md:gap-16">
+      <div className="grid grid-cols-1 gap-10 md:grid-cols-[13rem_minmax(0,1fr)] md:gap-16">
         <nav aria-label="Informations" className="md:sticky md:top-4 md:self-start">
           <p className="text-[10px] uppercase tracking-[0.28em] text-muted">Informations</p>
-          <ul className="mt-4 flex gap-x-6 gap-y-2 overflow-x-auto pb-2 md:flex-col md:gap-y-1 md:overflow-visible md:pb-0">
+          <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-1 md:flex-col md:gap-y-1">
             {pages.map((item) => (
-              <li key={item.slug} className="shrink-0">
+              <li key={item.slug} className="min-w-0">
                 <Link
                   href={`/infos/${item.slug}`}
                   aria-current={item.slug === page.slug ? "page" : undefined}
-                  className={`block whitespace-nowrap py-1.5 text-sm transition-colors md:whitespace-normal ${
+                  className={`block py-1.5 text-sm transition-colors ${
                     item.slug === page.slug
                       ? "text-brown underline decoration-gold decoration-1 underline-offset-8"
                       : "text-brown-soft hover:text-brown"
@@ -66,7 +66,7 @@ export default async function InfoPage({ params }: Props) {
           </ul>
         </nav>
 
-        <article className="max-w-2xl">
+        <article className="min-w-0 max-w-2xl break-words">
           <h1 className="font-serif text-4xl leading-tight sm:text-5xl">{page.title}</h1>
           {page.intro && (
             <p className="mt-6 border-l border-gold pl-4 text-sm leading-relaxed text-brown-soft">

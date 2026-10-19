@@ -14,7 +14,7 @@ export async function PageShell({
 }) {
   const { logoUrl } = await getSettings();
   return (
-    <div className="fixed inset-0 overflow-y-auto bg-cream text-brown">
+    <div className="fixed inset-0 overflow-y-auto overflow-x-hidden bg-cream text-brown">
       <header className="flex items-center justify-between px-6 py-6 sm:px-10 sm:py-8">
         <Logo href="/" className="text-3xl sm:text-4xl" imageUrl={logoUrl} />
         <Link

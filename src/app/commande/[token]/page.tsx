@@ -103,7 +103,7 @@ export default async function OrderPage({ params }: Props) {
       {order.payment_status === "paid" && <ClearCart />}
 
       <p className="text-[11px] uppercase tracking-[0.26em] text-gold">{order.number}</p>
-      <h1 className="mt-3 font-serif text-4xl leading-tight sm:text-5xl">{headline}</h1>
+      <h1 className="mt-3 break-words font-serif text-4xl leading-tight sm:text-5xl">{headline}</h1>
       {message && <p className="mt-5 text-sm leading-relaxed text-brown-soft">{message}</p>}
 
       {stepIndex >= 0 && (
